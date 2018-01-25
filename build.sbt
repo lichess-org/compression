@@ -1,0 +1,5 @@
+scalaVersion := "2.12.4"
+name := "compression"
+organization := "org.lichess"
+version := "1.0"
+resolvers += "lila-maven" at "https://raw.githubusercontent.com/ornicar/lila-maven/master"
