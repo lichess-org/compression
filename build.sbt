@@ -1,4 +1,5 @@
-scalaVersion := "2.11.11"
+scalaVersion := "2.12.4"
+crossScalaVersions := Seq("2.11.11", "2.12.4")
 name := "compression"
 organization := "org.lichess"
 version := "1.1"
