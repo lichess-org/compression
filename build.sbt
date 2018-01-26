@@ -1,4 +1,4 @@
-scalaVersion := "2.12.4"
+scalaVersion := "2.11.11"
 name := "compression"
 organization := "org.lichess"
 version := "1.0"
