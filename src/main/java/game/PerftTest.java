@@ -1,20 +1,19 @@
 package org.lichess.compression.game;
 
-import java.util.ArrayList;
-
 public class PerftTest {
     public static long perft(Board board, int depth) {
         // Counts the number of paths in the tree of legal moves. Useful for
         // testing performance and comparing to well known numbers.
         if (depth >= 1) {
-            ArrayList<Move> moves = new ArrayList<Move>(255);
+            MoveList moves = new MoveList();
             board.legalMoves(moves);
 
             if (depth == 1) {
                 return moves.size();
             } else {
                 long sum = 0;
-                for (Move move: moves) {
+                for (int i = 0; i < moves.size(); i++) {
+                    Move move = moves.get(i);
                     Board child = new Board(board);
                     child.play(move);
                     sum += perft(child, depth - 1);
