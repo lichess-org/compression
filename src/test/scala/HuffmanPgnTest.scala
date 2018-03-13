@@ -7,6 +7,9 @@ class HuffmanPgnTest extends Specification {
   def hexToBytes(str: String) =
     str.grouped(2).map(cc => Integer.parseInt(cc, 16).toByte).toArray
 
+  def base64ToBytes(str: String): Array[Byte] =
+    java.util.Base64.getDecoder.decode(str)
+
   "game compression" should {
     "compress and decompress" in {
       forall(fixtures) { pgn =>
@@ -20,7 +23,7 @@ class HuffmanPgnTest extends Specification {
     "stable format" in {
       forall(v1 zip fixtures) { case (encoded, pgn) =>
         val pgnMoves = pgn.split(" ")
-        val decoded = Encoder.decode(java.util.Base64.getDecoder.decode(encoded), pgnMoves.size)
+        val decoded = Encoder.decode(base64ToBytes(encoded), pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
       }
     }
@@ -90,10 +93,11 @@ class HuffmanPgnTest extends Specification {
       d7.positionHashes must_== hexToBytes("2edfae" + "279560")
     }
 
-    "position hash https://lichess.org/V0m3eSGN" in {
+    "position hash threefold" in {
+      // https://lichess.org/V0m3eSGN
       val pgnMoves = "Nf3 d5 d4 c5 dxc5 e6 c4 Bxc5 Nc3 Nf6 e3 O-O cxd5 Nxd5 Nxd5 Qxd5 Qxd5 exd5 Be2 Nc6 a3 Bf5 b4 Bb6 Bb2 Rfd8 Rd1 Rac8 O-O Ne7 Nd4 Bg6 Rc1 Rxc1 Rxc1 Nf5 Bf3 Kf8 Nb3 Nxe3 Bd4 Nc2 Bxb6 axb6 Bd1 Re8 Bxc2 Bxc2 Nd4 Bd3 f3 Bc4 Kf2 Re5 g4 g6 Rc3 Ke7 Re3 Kf6 h4 Rxe3 Kxe3 Ke5 f4+ Kd6 g5 Ke7 Nf3 Ke6 Nd4+ Ke7 Nf3 Ke6 Nd4+ Ke7".split(" ")
       val encoded = Encoder.encode(pgnMoves)
-      val decoded = Encoder.decode(encoded, 76)
+      val decoded = Encoder.decode(encoded, pgnMoves.size)
 
       val g5 = "39b83b"
       val threefold = "96de51"
@@ -101,6 +105,14 @@ class HuffmanPgnTest extends Specification {
       val ke6 = "6f90d7"
       val ncheck = "b72818"
       decoded.positionHashes must_== hexToBytes(g5 + threefold + nf3 + ke6 + ncheck + threefold + nf3 + ke6 + ncheck + threefold)
+    }
+
+    "position hash compat" in {
+      // https://lichess.org/DoqH1EQP
+      val pgnMoves = "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nc6 Nc3 g6 Be3 Bg7 Bc4 Nf6 f3 O-O Qd2 Nd7 O-O-O a5 g4 Nce5 Be2 a4 a3 Nb6 h4 Nbc4 Bxc4 Nxc4 Qf2 Qb6 b3 Nxe3 Qxe3 e5 Nf5 Qxe3+ Nxe3 axb3 cxb3 Rxa3 Kb2 Ra6 h5 h6 hxg6 fxg6 Ned5 Rxf3 Ne7+ Kf7 Nxc8 Ke6 Nxd6 Rf2+ Kb1 Rxd6 Nd5 Rc6 Rc1 Rxc1+ Rxc1 Re2 Rc7 Rxe4 Nb6 Bf8 Rxb7 Rb4 Rb8 Rxb3+ Kc2 Rb5 Rxf8 Rxb6 Rg8 Kf6 Rf8+ Kg5 Rh8 Rd6 Re8 Kxg4 Rxe5 g5 Re3 Kf5".split(" ")
+      val encoded = Encoder.encode(pgnMoves)
+      val decoded = Encoder.decode(encoded, pgnMoves.size)
+      decoded.positionHashes must_== base64ToBytes("oB9I1h1e6YDy")
     }
 
     "pass perft test" in {
