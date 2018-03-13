@@ -126,8 +126,9 @@ public class Encoder {
 
         // Collect the position hashes (3 bytes each) since the last capture
         // or pawn move.
-        ByteBuffer positionHashes = ByteBuffer.allocate(3 * (plies + 1));
-        appendHash(positionHashes, board.zobristHash());
+        int lastZeroingPly = -1;
+        byte positionHashes[] = new byte[3 * (plies + 1)];
+        setHash(positionHashes, -1, board.zobristHash());
 
         for (int i = 0; i <= plies; i++) {
             if (0 < i || i < plies) board.legalMoves(legals);
@@ -144,20 +145,18 @@ public class Encoder {
                 output[i] = san(move, legals);
                 board.play(move);
 
-                if (move.isZeroing()) positionHashes.clear();
-                appendHash(positionHashes, board.zobristHash());
+                if (move.isZeroing()) lastZeroingPly = i;
+                setHash(positionHashes, i, board.zobristHash());
 
                 if (i + 1 == plies) lastUci = move.uci();
             }
         }
 
-        positionHashes.flip();
-
         return new DecodeResult(
             output,
             board.pieceMap(),
             Bitboard.squareSet(board.castlingRights),
-            Arrays.copyOf(positionHashes.array(), positionHashes.limit()),
+            Arrays.copyOf(positionHashes, 3 * (plies - lastZeroingPly)),
             lastUci);
     }
 
@@ -214,9 +213,12 @@ public class Encoder {
         return "--";
     }
 
-    private static void appendHash(ByteBuffer buffer, int hash) {
-        buffer.put((byte) (hash >>> 16));
-        buffer.put((byte) (hash >>> 8));
-        buffer.put((byte) hash);
+    private static void setHash(byte buffer[], int ply, int hash) {
+        // The hash for the starting position (ply = -1) goes last. The most
+        // recent position goes first.
+        int base = buffer.length - 3 * (ply + 1 + 1);
+        buffer[base] = (byte) (hash >>> 16);
+        buffer[base + 1] = (byte) (hash >>> 8);
+        buffer[base + 2] = (byte) hash;
     }
 }

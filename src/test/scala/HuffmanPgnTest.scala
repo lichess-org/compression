@@ -53,31 +53,31 @@ class HuffmanPgnTest extends Specification {
 
       // initial position
       val d0 = Encoder.decode(encoded, 0)
-      d0.positionHashes must_== hexToBytes("91fc9c")
+      d0.positionHashes must_== hexToBytes("463b96")
 
       // 1. e4
       val d1 = Encoder.decode(encoded, 1)
-      d1.positionHashes must_== hexToBytes("114196")
+      d1.positionHashes must_== hexToBytes("823c9b")
 
       // 1. e4 d5
       val d2 = Encoder.decode(encoded, 2)
-      d2.positionHashes must_== hexToBytes("c50fb0")
+      d2.positionHashes must_== hexToBytes("0756b9")
 
       // 1. e4 d5 2. e5
       val d3 = Encoder.decode(encoded, 3)
-      d3.positionHashes must_== hexToBytes("db29d4")
+      d3.positionHashes must_== hexToBytes("662faf")
 
       // 1. e4 d5 2. e5 f5 (en passant matters)
       val d4 = Encoder.decode(encoded, 4)
-      d4.positionHashes must_== hexToBytes("47ff78")
+      d4.positionHashes must_== hexToBytes("22a48b")
 
       // 1. e4 d5 2. e5 f5 3. Ke2
       val d5 = Encoder.decode(encoded, 5)
-      d5.positionHashes must_== hexToBytes("47ff78" + "f242c1")
+      d5.positionHashes must_== hexToBytes("652a60" + "22a48b")
 
       // 1. e4 d5 2. e5 f5 3. Ke2 Kf7
       val d6 = Encoder.decode(encoded, 6)
-      d6.positionHashes must_== hexToBytes("47ff78" + "f242c1" + "46bdd9")
+      d6.positionHashes must_== hexToBytes("00fdd3" + "652a60" + "22a48b")
     }
 
     "position hash 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3" in {
@@ -86,11 +86,11 @@ class HuffmanPgnTest extends Specification {
 
       // 1. a4 b5 2. h4 b4 3. c4
       val d5 = Encoder.decode(encoded, 5)
-      d5.positionHashes must_== hexToBytes("067637")
+      d5.positionHashes must_== hexToBytes("3c8123")
 
       // 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3
       val d7 = Encoder.decode(encoded, 7)
-      d7.positionHashes must_== hexToBytes("2edfae" + "279560")
+      d7.positionHashes must_== hexToBytes("5c3f9b" + "93d326")
     }
 
     "position hash threefold" in {
@@ -99,12 +99,12 @@ class HuffmanPgnTest extends Specification {
       val encoded = Encoder.encode(pgnMoves)
       val decoded = Encoder.decode(encoded, pgnMoves.size)
 
-      val g5 = "39b83b"
-      val threefold = "96de51"
-      val nf3 = "4e669e"
-      val ke6 = "6f90d7"
-      val ncheck = "b72818"
-      decoded.positionHashes must_== hexToBytes(g5 + threefold + nf3 + ke6 + ncheck + threefold + nf3 + ke6 + ncheck + threefold)
+      val threefold = "966379"
+      val ncheck = "65afff"
+      val ke6 = "1bc865"
+      val nf3 = "e804e3"
+      val g5 = "ef8a0b"
+      decoded.positionHashes must_== hexToBytes(threefold + ncheck + ke6 + nf3 + threefold + ncheck + ke6 + nf3 + threefold + g5)
     }
 
     "position hash compat" in {
