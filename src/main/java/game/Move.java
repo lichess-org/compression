@@ -5,16 +5,16 @@ final class Move implements Comparable<Move> {
     public static final int EN_PASSANT = 1;
     public static final int CASTLING = 2;
 
-    public final int type;
-    public final Role role;
-    public final int from;
-    public final boolean capture;
-    public final int to;
-    public final Role promotion;
+    public int type;
+    public Role role;
+    public int from;
+    public boolean capture;
+    public int to;
+    public Role promotion;
 
     private int score;
 
-    private Move(Board board, int type, Role role, int from, boolean capture, int to, Role promotion) {
+    void set(Board board, int type, Role role, int from, boolean capture, int to, Role promotion) {
         this.type = type;
         this.role = role;
         this.from = from;
@@ -42,22 +42,6 @@ final class Move implements Comparable<Move> {
             (512 + moveValue << 12) +
             (to << 6) +
             from;
-    }
-
-    public static Move normal(Board board, Role role, int from, boolean capture, int to) {
-        return new Move(board, NORMAL, role, from, capture, to, null);
-    }
-
-    public static Move promotion(Board board, int from, boolean capture, int to, Role promotion) {
-        return new Move(board, NORMAL, Role.PAWN, from, capture, to, promotion);
-    }
-
-    public static Move castle(Board board, int king, int rook) {
-        return new Move(board, CASTLING, Role.KING, king, false, rook, null);
-    }
-
-    public static Move enPassant(Board board, int capturer, int to) {
-        return new Move(board, EN_PASSANT, Role.PAWN, capturer, true, to, null);
     }
 
     public int compareTo(Move other) {

@@ -1,7 +1,6 @@
 package org.lichess.compression.game;
 
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -15,6 +14,13 @@ import org.lichess.compression.BitReader;
 import org.lichess.compression.BitWriter;
 
 public class Encoder {
+    private static final ThreadLocal<MoveList> moveList = new ThreadLocal<MoveList>() {
+        @Override
+        protected MoveList initialValue() {
+            return new MoveList();
+        }
+    };
+
     private static Pattern SAN_PATTERN = Pattern.compile(
         "([NBKRQ])?([a-h])?([1-8])?x?([a-h][1-8])(?:=([NBRQK]))?[\\+#]?");
 
@@ -33,7 +39,7 @@ public class Encoder {
         BitWriter writer = new BitWriter();
 
         Board board = new Board();
-        ArrayList<Move> legals = new ArrayList<Move>(80);
+        MoveList legals = moveList.get();
 
         for (String pgnMove: pgnMoves) {
             // Parse SAN.
@@ -68,7 +74,7 @@ public class Encoder {
 
             // Find index in legal moves.
             board.legalMoves(legals);
-            legals.sort(null);
+            legals.sort();
 
             boolean foundMatch = false;
             int size = legals.size();
@@ -114,7 +120,7 @@ public class Encoder {
         String output[] = new String[plies];
 
         Board board = new Board();
-        ArrayList<Move> legals = new ArrayList<Move>(80);
+        MoveList legals = moveList.get();
 
         String lastUci = null;
 
@@ -133,7 +139,7 @@ public class Encoder {
 
             // Decode and play next move.
             if (i < plies) {
-                legals.sort(null);
+                legals.sort();
                 Move move = legals.get(Huffman.read(reader));
                 output[i] = san(move, legals);
                 board.play(move);
@@ -155,7 +161,7 @@ public class Encoder {
             lastUci);
     }
 
-    private static String san(Move move, ArrayList<Move> legals) {
+    private static String san(Move move, MoveList legals) {
         switch (move.type) {
             case Move.NORMAL:
             case Move.EN_PASSANT:
@@ -167,7 +173,8 @@ public class Encoder {
                     boolean file = false, rank = false;
                     long others = 0;
 
-                    for (Move other: legals) {
+                    for (int i = 0; i < legals.size(); i++) {
+                        Move other = legals.get(i);
                         if (other.role == move.role && other.to == move.to && other.from != move.from) {
                             others |= 1L << other.from;
                         }

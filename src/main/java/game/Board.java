@@ -1,6 +1,5 @@
 package org.lichess.compression.game;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -254,7 +253,7 @@ final class Board {
             Bitboard.pawnAttacks(!attacker, sq) & this.pawns);
     }
 
-    public void legalMoves(ArrayList<Move> moves) {
+    public void legalMoves(MoveList moves) {
         moves.clear();
 
         int king = king(this.turn);
@@ -272,7 +271,7 @@ final class Board {
 
         long blockers = sliderBlockers(king);
         if (blockers != 0 || hasEp) {
-            moves.removeIf(m -> !isSafe(king, m, blockers));
+            moves.retain(m -> isSafe(king, m, blockers));
         }
     }
 
@@ -282,19 +281,19 @@ final class Board {
 
         if (this.epSquare == 0) return false; // shortcut
 
-        ArrayList<Move> moves = new ArrayList<Move>(2);
+        MoveList moves = new MoveList(2);
         boolean hasEp = genEnPassant(moves);
 
         if (hasEp) {
             int king = king(this.turn);
             long blockers = sliderBlockers(king);
-            moves.removeIf(m -> !isSafe(king, m, blockers));
+            moves.retain(m -> isSafe(king, m, blockers));
         }
 
         return !moves.isEmpty();
     }
 
-    private void genNonKing(long mask, ArrayList<Move> moves) {
+    private void genNonKing(long mask, MoveList moves) {
         genPawn(mask, moves);
 
         // Knights.
@@ -304,7 +303,7 @@ final class Board {
             long targets = Bitboard.KNIGHT_ATTACKS[from] & mask;
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
-                moves.add(Move.normal(this, Role.KNIGHT, from, isOccupied(to), to));
+                moves.pushNormal(this, Role.KNIGHT, from, isOccupied(to), to);
                 targets &= targets - 1;
             }
             knights &= knights - 1;
@@ -317,7 +316,7 @@ final class Board {
             long targets = Bitboard.bishopAttacks(from, this.occupied) & mask;
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
-                moves.add(Move.normal(this, Role.BISHOP, from, isOccupied(to), to));
+                moves.pushNormal(this, Role.BISHOP, from, isOccupied(to), to);
                 targets &= targets - 1;
             }
             bishops &= bishops - 1;
@@ -330,7 +329,7 @@ final class Board {
             long targets = Bitboard.rookAttacks(from, this.occupied) & mask;
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
-                moves.add(Move.normal(this, Role.ROOK, from, isOccupied(to), to));
+                moves.pushNormal(this, Role.ROOK, from, isOccupied(to), to);
                 targets &= targets - 1;
             }
             rooks &= rooks - 1;
@@ -343,25 +342,25 @@ final class Board {
             long targets = Bitboard.queenAttacks(from, this.occupied) & mask;
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
-                moves.add(Move.normal(this, Role.QUEEN, from, isOccupied(to), to));
+                moves.pushNormal(this, Role.QUEEN, from, isOccupied(to), to);
                 targets &= targets - 1;
             }
             queens &= queens - 1;
         }
     }
 
-    private void genSafeKing(int king, long mask, ArrayList<Move> moves) {
+    private void genSafeKing(int king, long mask, MoveList moves) {
         long targets = Bitboard.KING_ATTACKS[king] & mask;
         while (targets != 0) {
             int to = Bitboard.lsb(targets);
             if (attacksTo(to, !this.turn) == 0) {
-                moves.add(Move.normal(this, Role.KING, king, isOccupied(to), to));
+                moves.pushNormal(this, Role.KING, king, isOccupied(to), to);
             }
             targets &= targets - 1;
         }
     }
 
-    private void genEvasions(int king, long checkers, ArrayList<Move> moves) {
+    private void genEvasions(int king, long checkers, MoveList moves) {
         // Checks by these sliding pieces can maybe be blocked.
         long sliders = checkers & (this.bishops ^ this.rooks ^ this.queens);
 
@@ -382,7 +381,7 @@ final class Board {
         }
     }
 
-    private void genPawn(long mask, ArrayList<Move> moves) {
+    private void genPawn(long mask, MoveList moves) {
         // Pawn captures (except en passant).
         long capturers = us() & this.pawns;
         while (capturers != 0) {
@@ -420,37 +419,37 @@ final class Board {
         while (doubleMoves != 0) {
             int to = Bitboard.lsb(doubleMoves);
             int from = to + (this.turn ? -16: 16);
-            moves.add(Move.normal(this, Role.PAWN, from, false, to));
+            moves.pushNormal(this, Role.PAWN, from, false, to);
             doubleMoves &= doubleMoves - 1;
         }
     }
 
-    private void addPawnMoves(int from, boolean capture, int to, ArrayList<Move> moves) {
+    private void addPawnMoves(int from, boolean capture, int to, MoveList moves) {
         if (Square.rank(to) == (this.turn ? 7 : 0)) {
-            moves.add(Move.promotion(this, from, capture, to, Role.QUEEN));
-            moves.add(Move.promotion(this, from, capture, to, Role.KNIGHT));
-            moves.add(Move.promotion(this, from, capture, to, Role.ROOK));
-            moves.add(Move.promotion(this, from, capture, to, Role.BISHOP));
+            moves.pushPromotion(this, from, capture, to, Role.QUEEN);
+            moves.pushPromotion(this, from, capture, to, Role.KNIGHT);
+            moves.pushPromotion(this, from, capture, to, Role.ROOK);
+            moves.pushPromotion(this, from, capture, to, Role.BISHOP);
         } else {
-            moves.add(Move.normal(this, Role.PAWN, from, capture, to));
+            moves.pushNormal(this, Role.PAWN, from, capture, to);
         }
     }
 
-    private boolean genEnPassant(ArrayList<Move> moves) {
+    private boolean genEnPassant(MoveList moves) {
         if (this.epSquare == 0) return false;
 
         boolean found = false;
         long pawns = us() & this.pawns & Bitboard.pawnAttacks(!this.turn, this.epSquare);
         while (pawns != 0) {
             int pawn = Bitboard.lsb(pawns);
-            moves.add(Move.enPassant(this, pawn, this.epSquare));
+            moves.pushEnPassant(this, pawn, this.epSquare);
             found = true;
             pawns &= pawns - 1;
         }
         return found;
     }
 
-    private void genCastling(int king, ArrayList<Move> moves) {
+    private void genCastling(int king, MoveList moves) {
         long rooks = this.castlingRights & Bitboard.RANKS[this.turn ? 0 : 7];
         while (rooks != 0) {
             int rook = Bitboard.lsb(rooks);
@@ -465,7 +464,7 @@ final class Board {
                     }
                     kingPath &= kingPath - 1;
                 }
-                if (kingPath == 0) moves.add(Move.castle(this, king, rook));
+                if (kingPath == 0) moves.pushCastle(this, king, rook);
             }
             rooks &= rooks - 1;
         }
