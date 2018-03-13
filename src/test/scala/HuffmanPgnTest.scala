@@ -29,7 +29,7 @@ class HuffmanPgnTest extends Specification {
     }
 
     "unmoved rooks" in {
-      import scala.collection.JavaConversions.asScalaSet
+      import scala.collection.JavaConverters.asScalaSet
       val pgnMoves = "d4 h5 c4 Rh6 Nf3 Rh8".split(" ")
       val encoded = Encoder.encode(pgnMoves)
       val decoded = Encoder.decode(encoded, pgnMoves.size)
