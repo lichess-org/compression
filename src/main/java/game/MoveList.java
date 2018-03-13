@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 
 final class MoveList {
+    // A move list that reuses a pool of moves, never allocating new objects.
+    // This is somewhat dangerous: Care must be taken that the list is not
+    // modified while external code still holds references.
     private final Move buffer[];
     private int size = 0;
 
@@ -57,10 +60,12 @@ final class MoveList {
     }
 
     public void retain(Predicate<Move> predicate) {
+        // Keep only the moves where the predicate returns true. Does not
+        // preserve the order of moves.
         int i = 0;
         while (i < size) {
             if (predicate.test(buffer[i])) {
-                i += 1;
+                i++;
             } else {
                 swapRemove(i);
             }
@@ -68,6 +73,9 @@ final class MoveList {
     }
 
     private void swapRemove(int i) {
+        // Removes a move by swapping the last move into its place.
+        // For i != j buffer[i] and buffer[j] should never point to the same
+        // object!
         assert i < size;
         size--;
         Move tmp = buffer[i];
