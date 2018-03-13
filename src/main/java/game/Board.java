@@ -287,10 +287,10 @@ final class Board {
         if (hasEp) {
             int king = king(this.turn);
             long blockers = sliderBlockers(king);
-            moves.retain(m -> isSafe(king, m, blockers));
+            return moves.anyMatch(m -> isSafe(king, m, blockers));
         }
 
-        return !moves.isEmpty();
+        return false;
     }
 
     private void genNonKing(long mask, MoveList moves) {
