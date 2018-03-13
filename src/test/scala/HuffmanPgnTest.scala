@@ -90,6 +90,19 @@ class HuffmanPgnTest extends Specification {
       d7.positionHashes must_== hexToBytes("2edfae" + "279560")
     }
 
+    "position hash https://lichess.org/V0m3eSGN" in {
+      val pgnMoves = "Nf3 d5 d4 c5 dxc5 e6 c4 Bxc5 Nc3 Nf6 e3 O-O cxd5 Nxd5 Nxd5 Qxd5 Qxd5 exd5 Be2 Nc6 a3 Bf5 b4 Bb6 Bb2 Rfd8 Rd1 Rac8 O-O Ne7 Nd4 Bg6 Rc1 Rxc1 Rxc1 Nf5 Bf3 Kf8 Nb3 Nxe3 Bd4 Nc2 Bxb6 axb6 Bd1 Re8 Bxc2 Bxc2 Nd4 Bd3 f3 Bc4 Kf2 Re5 g4 g6 Rc3 Ke7 Re3 Kf6 h4 Rxe3 Kxe3 Ke5 f4+ Kd6 g5 Ke7 Nf3 Ke6 Nd4+ Ke7 Nf3 Ke6 Nd4+ Ke7".split(" ")
+      val encoded = Encoder.encode(pgnMoves)
+      val decoded = Encoder.decode(encoded, 76)
+
+      val g5 = "39b83b"
+      val threefold = "96de51"
+      val nf3 = "4e669e"
+      val ke6 = "6f90d7"
+      val ncheck = "b72818"
+      decoded.positionHashes must_== hexToBytes(g5 + threefold + nf3 + ke6 + ncheck + threefold + nf3 + ke6 + ncheck + threefold)
+    }
+
     "pass perft test" in {
       // Running the entire suite can take minutes.
 
