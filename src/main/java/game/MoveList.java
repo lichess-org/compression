@@ -59,6 +59,14 @@ final class MoveList {
         Arrays.sort(buffer, 0, size, null);
     }
 
+    public boolean anyMatch(Predicate<Move> predicate) {
+        for (int i = 0; i < size; i++) {
+            if (predicate.test(buffer[i]))
+                return true;
+        }
+        return false;
+    }
+
     public void retain(Predicate<Move> predicate) {
         // Keep only the moves where the predicate returns true. Does not
         // preserve the order of moves.
