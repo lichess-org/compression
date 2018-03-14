@@ -256,7 +256,7 @@ final class Board {
         moves.clear();
 
         int king = king(this.turn);
-        boolean hasEp = false;
+        boolean hasEp;
 
         long checkers = attacksTo(king, !this.turn);
 
@@ -269,9 +269,7 @@ final class Board {
         } else {
             // May generate illegal check-blocking moves.
             genEvasions(king, checkers, moves);
-            if (this.epSquare != 0 && (checkers & this.pawns) != 0) {
-                hasEp = genEnPassant(moves);
-            }
+            hasEp = (checkers & this.pawns) != 0 && genEnPassant(moves);
         }
 
         long blockers = sliderBlockers(king);
