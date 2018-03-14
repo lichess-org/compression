@@ -261,15 +261,15 @@ final class Board {
         long checkers = attacksTo(king, !this.turn);
 
         if (checkers == 0) {
+            hasEp = genEnPassant(moves);
             long target = ~us();
             genNonKing(target, moves);
             genSafeKing(king, target, moves);
             genCastling(king, moves);
-            hasEp = genEnPassant(moves);
         } else {
+            hasEp = (checkers & this.pawns) != 0 && genEnPassant(moves);
             // May generate illegal check-blocking moves.
             genEvasions(king, checkers, moves);
-            hasEp = (checkers & this.pawns) != 0 && genEnPassant(moves);
         }
 
         long blockers = sliderBlockers(king);
