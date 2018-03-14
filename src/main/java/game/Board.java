@@ -223,7 +223,6 @@ final class Board {
         long snipers = them() & (
             Bitboard.rookAttacks(king, 0) & (this.rooks ^ this.queens) |
             Bitboard.bishopAttacks(king, 0) & (this.bishops ^ this.queens));
-
         long blockers = 0;
 
         while (snipers != 0) {
@@ -257,20 +256,26 @@ final class Board {
         moves.clear();
 
         int king = king(this.turn);
-        boolean hasEp = genEnPassant(moves);
+        boolean hasEp = false;
 
         long checkers = attacksTo(king, !this.turn);
+
         if (checkers == 0) {
             long target = ~us();
             genNonKing(target, moves);
             genSafeKing(king, target, moves);
             genCastling(king, moves);
+            hasEp = genEnPassant(moves);
         } else {
+            // May generate illegal check-blocking moves.
             genEvasions(king, checkers, moves);
+            if (this.epSquare != 0 && (checkers & this.pawns) != 0) {
+                hasEp = genEnPassant(moves);
+            }
         }
 
         long blockers = sliderBlockers(king);
-        if (blockers != 0 || hasEp) {
+        if (blockers != 0 || (checkers == 0 && hasEp)) {
             moves.retain(m -> isSafe(king, m, blockers));
         }
     }
@@ -470,8 +475,9 @@ final class Board {
         }
     }
 
-    // Used for filtering candidate moves that would leave/put the king
-    // in check.
+    /**
+     * Filters candidate moves that would leave/put the king in check.
+     */
     private boolean isSafe(int king, Move move, long blockers) {
         switch (move.type) {
             case Move.NORMAL:
