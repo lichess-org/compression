@@ -29,6 +29,46 @@ public class PerftTest {
         if (lhs != rhs) throw new RuntimeException("perft test failed");
     }
 
+    // Particularly tricky test positions from:
+    // https://chessprogramming.wikispaces.com/Perft+Results
+
+    public static void trickyBatch() {
+        // (2) Kiwipete by Peter McKenzie
+        // r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -
+        Board board = new Board(0x2d50081280e700L, 0x221000040000L, 0x40010000001800L, 0x8100000000000081L, 0x10000000200000L, 0x1000000000000010L, 0x181024ff91L, 0x917d730002800000L, true, 0, 0x8100000000000081L);
+        assertEqual(perft(board, 1), 48);
+        assertEqual(perft(board, 2), 2039);
+        assertEqual(perft(board, 3), 97862);
+
+        // (3) 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
+        board = new Board(0x4080220005000L, 0x0L, 0x0L, 0x8002000000L, 0x0L, 0x180000000L, 0x302005000L, 0x40880a0000000L, true, 0, 0x0L);
+        assertEqual(perft(board, 1), 14);
+        assertEqual(perft(board, 2), 191);
+        assertEqual(perft(board, 3), 2812);
+        assertEqual(perft(board, 4), 43238);
+
+        // (4) Mirrored
+        // r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ -
+        board = new Board(0xcb00140200ef00L, 0x200001a00000L, 0x300420000L, 0x2100000000000081L, 0x800010000000000L, 0x4000000000000010L, 0x201000162ee91L, 0x69c9201702800100L, false, 0, 0x81L);
+        assertEqual(perft(board, 1), 6);
+        assertEqual(perft(board, 2), 264);
+        assertEqual(perft(board, 3), 9467);
+
+        // (5) http://www.talkchess.com/forum/viewtopic.php?t=42463
+        // rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ -
+        board = new Board(0xeb04000000c700L, 0x200000000003002L, 0x410000004000004L, 0x8100000000000081L, 0x800000000000008L, 0x2000000000000010L, 0x800000400d79fL, 0xaff3040000002000L, true, 0, 0x81L);
+        assertEqual(perft(board, 1), 44);
+        assertEqual(perft(board, 2), 1486);
+        assertEqual(perft(board, 3), 62379);
+
+        // (6) By Steven Edwards
+        // r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - -
+        board = new Board(0xe609101009e600L, 0x240000240000L, 0x4444000000L, 0x2100000000000021L, 0x10000000001000L, 0x4000000000000040L, 0x40142df661L, 0x61f62d1440000000L, true, 0, 0x0L);
+        assertEqual(perft(board, 1), 46);
+        assertEqual(perft(board, 2), 2079);
+        assertEqual(perft(board, 3), 89890);
+    }
+
     // Test cases generated from:
     // https://marcelk.net/rookie/nostalgia/v3/perft-random.epd
 
