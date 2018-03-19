@@ -36,6 +36,13 @@ class HuffmanPgnTest extends Specification {
       asScalaSet(decoded.unmovedRooks) must_== Set(0, 7, 56)
     }
 
+    "half-move clock" in {
+      val pgnMoves = "e4 e5 Nf3 Nc6 Nc3 Nf6 Bb5 d6 O-O Be7 d4 exd4 Nxd4 Bd7 Bg5 O-O Nxc6 bxc6 Bd3 h6 Bh4 Ne8 Bxe7 Qxe7 Qf3 Nf6 Rfe1 Rfe8".split(" ")
+      val encoded = Encoder.encode(pgnMoves)
+      val halfMoveClocks = List(0, 0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 0, 0, 0, 1, 2, 3, 0, 0, 1, 0, 1, 2, 0, 0, 1, 2, 3, 4)
+      (0 to pgnMoves.size).map(Encoder.decode(encoded, _).halfMoveClock) must_== halfMoveClocks
+    }
+
     "last uci" in {
       val pgnMoves = "e4 e5 Nf3 Nc6 Bc4 Nf6 d4 exd4 O-O Bc5 e5 d5 exf6 dxc4 Re1+ Be6 Ng5 Qxf6 Nxe6 Qxe6".split(" ")
       val encoded = Encoder.encode(pgnMoves)
