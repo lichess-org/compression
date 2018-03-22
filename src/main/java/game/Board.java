@@ -163,7 +163,10 @@ final class Board {
         switch (move.type) {
             case Move.NORMAL:
                 if (move.role == Role.PAWN && Math.abs(move.from - move.to) == 16) {
-                    this.epSquare = move.from + (this.turn ? 8 : -8);
+                    int sq = move.from + (this.turn ? 8 : -8);
+                    if ((Bitboard.pawnAttacks(this.turn, sq) & this.pawns & them()) != 0) {
+                        this.epSquare = sq;
+                    }
                 }
 
                 if (this.castlingRights != 0) {
@@ -282,15 +285,11 @@ final class Board {
         if (this.epSquare == 0) return false; // shortcut
 
         MoveList moves = new MoveList(2);
-        boolean hasEp = genEnPassant(moves);
+        if (! genEnPassant(moves)) return false; // shortcut
 
-        if (hasEp) {
-            int king = king(this.turn);
-            long blockers = sliderBlockers(king);
-            return moves.anyMatch(m -> isSafe(king, m, blockers));
-        }
-
-        return false;
+        int king = king(this.turn);
+        long blockers = sliderBlockers(king);
+        return moves.anyMatch(m -> isSafe(king, m, blockers));
     }
 
     private void genNonKing(long mask, MoveList moves) {
