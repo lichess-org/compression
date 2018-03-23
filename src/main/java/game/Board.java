@@ -163,9 +163,12 @@ final class Board {
         switch (move.type) {
             case Move.NORMAL:
                 if (move.role == Role.PAWN && Math.abs(move.from - move.to) == 16) {
-                    int sq = move.from + (this.turn ? 8 : -8);
-                    if ((Bitboard.pawnAttacks(this.turn, sq) & this.pawns & them()) != 0) {
-                        this.epSquare = sq;
+                    long theirPawns = them() & this.pawns;
+                    if (theirPawns != 0) {
+                        int sq = move.from + (this.turn ? 8 : -8);
+                        if ((Bitboard.pawnAttacks(this.turn, sq) & theirPawns) != 0) {
+                            this.epSquare = sq;
+                        }
                     }
                 }
 
