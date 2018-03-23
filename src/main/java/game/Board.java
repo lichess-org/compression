@@ -259,9 +259,11 @@ final class Board {
     public void legalMoves(MoveList moves) {
         moves.clear();
 
-        int king = king(this.turn);
-        boolean hasEp = genEnPassant(moves);
+        if (this.epSquare != 0) {
+            genEnPassant(moves);
+        }
 
+        int king = king(this.turn);
         long checkers = attacksTo(king, !this.turn);
         if (checkers == 0) {
             long target = ~us();
@@ -273,7 +275,7 @@ final class Board {
         }
 
         long blockers = sliderBlockers(king);
-        if (blockers != 0 || hasEp) {
+        if (blockers != 0 || this.epSquare != 0) {
             moves.retain(m -> isSafe(king, m, blockers));
         }
     }
@@ -285,7 +287,7 @@ final class Board {
         if (this.epSquare == 0) return false; // shortcut
 
         MoveList moves = new MoveList(2);
-        if (! genEnPassant(moves)) return false; // shortcut
+        genEnPassant(moves);
 
         int king = king(this.turn);
         long blockers = sliderBlockers(king);
@@ -434,18 +436,13 @@ final class Board {
         }
     }
 
-    private boolean genEnPassant(MoveList moves) {
-        if (this.epSquare == 0) return false;
-
-        boolean found = false;
+    private void genEnPassant(MoveList moves) {
         long pawns = us() & this.pawns & Bitboard.pawnAttacks(!this.turn, this.epSquare);
         while (pawns != 0) {
             int pawn = Bitboard.lsb(pawns);
             moves.pushEnPassant(this, pawn, this.epSquare);
-            found = true;
             pawns &= pawns - 1;
         }
-        return found;
     }
 
     private void genCastling(int king, MoveList moves) {
