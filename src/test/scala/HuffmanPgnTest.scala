@@ -122,6 +122,18 @@ class HuffmanPgnTest extends Specification {
       decoded.positionHashes must_== base64ToBytes("oB9I1h1e6YDy")
     }
 
+    "work with all black legal moves" in {
+      // https://lichess.org/YycayYfM
+      val prefix = "e4 c6 Nf3 d5 exd5 cxd5 d4 Nc6 c3 Nf6 Bf4 Bg4 Be2 e6 Nbd2 Bd6 Bxd6 Qxd6 O-O O-O Re1 a6 Ne5 Bxe2 Qxe2 Nd7 Nxd7 Qxd7 a4 Rab8 Nf3 b5 axb5 axb5 Ne5 Nxe5 Qxe5 b4 c4 dxc4 Rac1 Rbc8 Qa5 Qb7 Re2 c3 bxc3 bxc3 Rec2 Qe4 Qe5 Qxe5 dxe5 Rc5 f4 Rfc8 Kf2 f6 exf6 gxf6 Ke3"
+      val legals = "Kh8 Kf8 Kg7 Kf7 Rf8 Re8 Rd8 Rb8 Ra8 R8c7 R8c6 R5c7 R5c6 Rh5 Rg5 Rf5 Re5+ Rd5 Rb5 Ra5 Rc4 h6 f5 e5 h5".split(" ")
+      forall(legals) { legal =>
+        val pgnMoves = (prefix + " " + legal).split(" ")
+        val encoded = Encoder.encode(pgnMoves)
+        val decoded = Encoder.decode(encoded, pgnMoves.size)
+        pgnMoves must_== decoded.pgnMoves
+      }
+    }
+
     "pass perft test" in {
       // Running the entire suite can take minutes.
 
