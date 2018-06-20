@@ -1,8 +1,8 @@
-scalaVersion := "2.12.4"
-crossScalaVersions := Seq("2.11.11", "2.12.4")
+scalaVersion := "2.12.6"
+crossScalaVersions := Seq("2.11.12", "2.12.6")
 name := "compression"
 organization := "org.lichess"
-version := "1.4"
+version := "1.5"
 resolvers += "lila-maven" at "https://raw.githubusercontent.com/ornicar/lila-maven/master"
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.0.2" % "test"
 scalacOptions in Test += "-Yrangepos"
