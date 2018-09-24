@@ -134,7 +134,7 @@ class Bitboard {
         while (b != 0) {
             int sq = lsb(b);
             set.add(sq);
-            b &= b - 1;
+            b &= b - 1L;
         }
         return set;
     }

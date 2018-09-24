@@ -152,7 +152,7 @@ final class Board {
         while (occupied != 0) {
             int sq = Bitboard.lsb(occupied);
             map.put(sq, new Piece(whiteAt(sq), roleAt(sq)));
-            occupied &= occupied - 1;
+            occupied &= occupied - 1L;
         }
         return map;
     }
@@ -236,7 +236,7 @@ final class Board {
             int sniper = Bitboard.lsb(snipers);
             long between = Bitboard.BETWEEN[king][sniper] & this.occupied;
             if (!Bitboard.moreThanOne(between)) blockers |= between;
-            snipers &= snipers - 1;
+            snipers &= snipers - 1L;
         }
 
         return blockers;
@@ -308,9 +308,9 @@ final class Board {
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
                 moves.pushNormal(this, Role.KNIGHT, from, isOccupied(to), to);
-                targets &= targets - 1;
+                targets &= targets - 1L;
             }
-            knights &= knights - 1;
+            knights &= knights - 1L;
         }
 
         // Bishops.
@@ -321,9 +321,9 @@ final class Board {
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
                 moves.pushNormal(this, Role.BISHOP, from, isOccupied(to), to);
-                targets &= targets - 1;
+                targets &= targets - 1L;
             }
-            bishops &= bishops - 1;
+            bishops &= bishops - 1L;
         }
 
         // Rooks.
@@ -334,9 +334,9 @@ final class Board {
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
                 moves.pushNormal(this, Role.ROOK, from, isOccupied(to), to);
-                targets &= targets - 1;
+                targets &= targets - 1L;
             }
-            rooks &= rooks - 1;
+            rooks &= rooks - 1L;
         }
 
         // Queens.
@@ -347,9 +347,9 @@ final class Board {
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
                 moves.pushNormal(this, Role.QUEEN, from, isOccupied(to), to);
-                targets &= targets - 1;
+                targets &= targets - 1L;
             }
-            queens &= queens - 1;
+            queens &= queens - 1L;
         }
     }
 
@@ -360,7 +360,7 @@ final class Board {
             if (attacksTo(to, !this.turn) == 0) {
                 moves.pushNormal(this, Role.KING, king, isOccupied(to), to);
             }
-            targets &= targets - 1;
+            targets &= targets - 1L;
         }
     }
 
@@ -373,7 +373,7 @@ final class Board {
         while (sliders != 0) {
             int slider = Bitboard.lsb(sliders);
             attacked |= Bitboard.RAYS[king][slider] ^ (1L << slider);
-            sliders &= sliders - 1;
+            sliders &= sliders - 1L;
         }
 
         genSafeKing(king, ~us() & ~attacked, moves);
@@ -394,9 +394,9 @@ final class Board {
             while (targets != 0) {
                 int to = Bitboard.lsb(targets);
                 addPawnMoves(from, true, to, moves);
-                targets &= targets - 1;
+                targets &= targets - 1L;
             }
-            capturers &= capturers - 1;
+            capturers &= capturers - 1L;
         }
 
         // Normal pawn moves.
@@ -417,14 +417,14 @@ final class Board {
             int to = Bitboard.lsb(singleMoves);
             int from = to + (this.turn ? -8 : 8);
             addPawnMoves(from, false, to, moves);
-            singleMoves &= singleMoves - 1;
+            singleMoves &= singleMoves - 1L;
         }
 
         while (doubleMoves != 0) {
             int to = Bitboard.lsb(doubleMoves);
             int from = to + (this.turn ? -16: 16);
             moves.pushNormal(this, Role.PAWN, from, false, to);
-            doubleMoves &= doubleMoves - 1;
+            doubleMoves &= doubleMoves - 1L;
         }
     }
 
@@ -444,7 +444,7 @@ final class Board {
         while (pawns != 0) {
             int pawn = Bitboard.lsb(pawns);
             moves.pushEnPassant(this, pawn, this.epSquare);
-            pawns &= pawns - 1;
+            pawns &= pawns - 1L;
         }
     }
 
@@ -461,11 +461,11 @@ final class Board {
                     if (attacksTo(sq, !this.turn, this.occupied ^ (1L << king)) != 0) {
                         break;
                     }
-                    kingPath &= kingPath - 1;
+                    kingPath &= kingPath - 1L;
                 }
                 if (kingPath == 0) moves.pushCastle(this, king, rook);
             }
-            rooks &= rooks - 1;
+            rooks &= rooks - 1L;
         }
     }
 

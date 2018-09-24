@@ -11,7 +11,7 @@ class ZobristHash {
         while (occupied != 0) {
             int sq = Bitboard.lsb(occupied);
             hash ^= hashPiece(sq, board.whiteAt(sq), board.roleAt(sq));
-            occupied &= occupied - 1;
+            occupied &= occupied - 1L;
         }
         return hash;
     }
