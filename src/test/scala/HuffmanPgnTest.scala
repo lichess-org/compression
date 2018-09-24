@@ -32,8 +32,12 @@ class HuffmanPgnTest extends Specification {
       import scala.collection.JavaConverters.asScalaSet
       val pgnMoves = "d4 h5 c4 Rh6 Nf3 Rh8".split(" ")
       val encoded = Encoder.encode(pgnMoves)
-      val decoded = Encoder.decode(encoded, pgnMoves.size)
-      asScalaSet(decoded.unmovedRooks) must_== Set(0, 7, 56)
+
+      val d1 = Encoder.decode(encoded, 0)
+      asScalaSet(d1.unmovedRooks) must_== Set(0, 7, 56, 63)
+
+      val d2 = Encoder.decode(encoded, pgnMoves.size)
+      asScalaSet(d2.unmovedRooks) must_== Set(0, 7, 56)
     }
 
     "half-move clock" in {
