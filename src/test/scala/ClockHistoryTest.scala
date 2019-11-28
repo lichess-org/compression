@@ -1,7 +1,6 @@
 package org.lichess.compression.clock
 
 import org.specs2.mutable._
-import scala.collection.breakOut
 
 case class Centis(centis: Int) extends AnyVal {
   def *(f: Int) = Centis(centis * f)
@@ -15,11 +14,13 @@ object clockHistory {
 
   def writeSide(start: Centis, times: Vector[Centis], flagged: Boolean) = {
     val timesToWrite = if (flagged) times.dropRight(1) else times
-    ByteArray(Encoder.encode(timesToWrite.map(_.centis)(breakOut), start.centis))
+    ByteArray(Encoder.encode(timesToWrite.iterator.map(_.centis).to(Array), start.centis))
   }
 
   def readSide(start: Centis, ba: ByteArray, flagged: Boolean) = {
-    val decoded: Vector[Centis] = Encoder.decode(ba.value, start.centis).map(Centis.apply)(breakOut)
+    val decoded: Vector[Centis] =
+      Encoder.decode(ba.value, start.centis)
+        .iterator.map(Centis.apply).to(Vector)
     if (flagged) decoded :+ Centis(0) else decoded
   }
 }
