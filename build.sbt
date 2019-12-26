@@ -1,9 +1,9 @@
 scalaVersion := "2.13.1"
-crossScalaVersions := Seq("2.11.12", "2.12.6")
+crossScalaVersions := Seq("2.11.12", "2.12.10")
 name := "compression"
 organization := "org.lichess"
 version := "1.5"
 resolvers += "lila-maven" at "https://raw.githubusercontent.com/ornicar/lila-maven/master"
-libraryDependencies += "org.specs2" %% "specs2-core" % "4.5.1" % "test"
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.8.1" % Test
 scalacOptions in Test += "-Yrangepos"
 publishTo := Some(Resolver.file("file", new File(sys.props.getOrElse("publishTo", ""))))
