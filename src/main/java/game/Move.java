@@ -72,6 +72,10 @@ final class Move implements Comparable<Move> {
         return this.capture || this.role == Role.PAWN;
     }
 
+    public boolean isIrreversible() {
+        return this.isZeroing() || this.type == CASTLING;
+    }
+
     // Piece-Square table with some manual tweaks (breaking symmetry).
     //
     // Original table taken from:

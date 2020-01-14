@@ -129,6 +129,7 @@ public class Encoder {
         // Collect the position hashes (3 bytes each) since the last capture
         // or pawn move.
         int lastZeroingPly = -1;
+        int lastIrreversiblePly = -1;
         byte positionHashes[] = new byte[3 * (plies + 1)];
         setHash(positionHashes, -1, board.zobristHash());
 
@@ -148,6 +149,7 @@ public class Encoder {
                 board.play(move);
 
                 if (move.isZeroing()) lastZeroingPly = i;
+                if (move.isIrreversible()) lastIrreversiblePly = i;
                 setHash(positionHashes, i, board.zobristHash());
 
                 if (i + 1 == plies) lastUci = move.uci();
@@ -159,7 +161,7 @@ public class Encoder {
             board.pieceMap(),
             Bitboard.squareSet(board.castlingRights),
             plies - 1 - lastZeroingPly,
-            Arrays.copyOf(positionHashes, 3 * (plies - lastZeroingPly)),
+            Arrays.copyOf(positionHashes, 3 * (plies - lastIrreversiblePly)),
             lastUci);
     }
 
