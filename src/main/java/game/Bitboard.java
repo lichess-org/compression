@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 class Bitboard {
-    public static final long ALL = -1;
+    public static final long ALL = -1L;
 
     public static final long RANKS[] = new long[8];
     public static final long FILES[] = new long[8];
