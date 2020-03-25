@@ -17,7 +17,7 @@ class Magic {
     }
 
     // Precomputed overlapping fixed shift magics:
-    // https://en.wikipedia.org/wiki/Bitboard#Magic_bitboards
+    //  https://www.chessprogramming.org/Magic_Bitboards
 
     public static Magic ROOK[] = {
         new Magic(0x000101010101017eL, 0x00280077ffebfffeL, 26304),
