@@ -28,6 +28,12 @@ class HuffmanPgnTest extends Specification {
       }
     }
 
+    "least surprise" in {
+      val n = 22
+      val decoded = Encoder.decode(Array.fill(n)(0.toByte), n)
+      decoded.pgnMoves.mkString(" ") must_== "e4 e5 Nf3 Nf6 Nxe5 Nxe4 Nxf7 Kxf7 d4 Nxf2 Kxf2 d5 Nc3 Nc6 Nxd5 Qxd5 Kg1 Nxd4 Qxd4 Qxd4+ Be3 Qxe3#"
+    }
+
     "unmoved rooks" in {
       import scala.jdk.CollectionConverters._
       val pgnMoves = "d4 h5 c4 Rh6 Nf3 Rh8".split(" ")
