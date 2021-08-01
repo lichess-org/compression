@@ -80,6 +80,22 @@ final class Board {
 
         this.incrementalHash = ZobristHash.hashPieces(this) ^ ZobristHash.hashTurn(this);
     }
+    
+    @Override
+    public String toString() {
+        String board = "";
+        for (int i = 0; i < 64; i++) {
+            if(i % 8 == 0 && i != 64) board += "\n";
+            int square = Square.mirror(i);
+            if(roleAt(square) != null){
+                String role = roleAt(square).toString();
+                board += whiteAt(square) ? "[" + role.toUpperCase(Locale.ROOT) + "]," : "[" + role.toLowerCase(Locale.ROOT) + "],";
+            }else{
+                board += "[ ],";
+            }
+        }
+        return board;
+    }
 
     private boolean isOccupied(int square) {
         return Bitboard.contains(this.occupied, square);
