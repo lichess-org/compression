@@ -3,7 +3,7 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  openjdk13:
+  openjdk17:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
