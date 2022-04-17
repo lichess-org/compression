@@ -1,8 +1,8 @@
 package org.lichess.compression.game
 
-import org.specs2.mutable._
+import org.specs2.mutable.*
 
-class HuffmanPgnTest extends Specification {
+class HuffmanPgnTest extends Specification:
 
   def hexToBytes(str: String) =
     str.grouped(2).map(cc => Integer.parseInt(cc, 16).toByte).toArray
@@ -35,7 +35,7 @@ class HuffmanPgnTest extends Specification {
     }
 
     "unmoved rooks" in {
-      import scala.jdk.CollectionConverters._
+      import scala.jdk.CollectionConverters.*
       val pgnMoves = "d4 h5 c4 Rh6 Nf3 Rh8".split(" ")
       val encoded = Encoder.encode(pgnMoves)
 
@@ -421,4 +421,3 @@ class HuffmanPgnTest extends Specification {
     "MBXVjuQzk9ZbSKw/IzSfmL9/8WX+4bn+",
     "Hw15XVdxZr3eLz6xem8XLy8NLfv1/u0n/U0ifPQ="
   )
-}

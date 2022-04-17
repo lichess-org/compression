@@ -1,31 +1,26 @@
 package org.lichess.compression.clock
 
-import org.specs2.mutable._
+import org.specs2.mutable.*
 
-case class Centis(centis: Int) extends AnyVal {
+case class Centis(centis: Int) extends AnyVal:
   def *(f: Int) = Centis(centis * f)
   def -(c: Int) = Centis(centis - c)
-}
-case class ByteArray(value: Array[Byte]) extends AnyVal {
+case class ByteArray(value: Array[Byte]) extends AnyVal:
   def isEmpty = value.isEmpty
-}
 
-object clockHistory {
+object clockHistory:
 
-  def writeSide(start: Centis, times: Vector[Centis], flagged: Boolean) = {
+  def writeSide(start: Centis, times: Vector[Centis], flagged: Boolean) =
     val timesToWrite = if (flagged) times.dropRight(1) else times
     ByteArray(Encoder.encode(timesToWrite.iterator.map(_.centis).to(Array), start.centis))
-  }
 
-  def readSide(start: Centis, ba: ByteArray, flagged: Boolean) = {
+  def readSide(start: Centis, ba: ByteArray, flagged: Boolean) =
     val decoded: Vector[Centis] =
       Encoder.decode(ba.value, start.centis)
         .iterator.map(Centis.apply).to(Vector)
     if (flagged) decoded :+ Centis(0) else decoded
-  }
-}
 
-class BinaryClockHistoryTest extends Specification {
+class BinaryClockHistoryTest extends Specification:
 
   val hour = Centis(60 * 60 * 100)
   val day = hour * 24
@@ -72,11 +67,9 @@ class BinaryClockHistoryTest extends Specification {
       val times = Vector(5009, 4321, 2999, 321, 3044, 21, 2055, 77).map(Centis.apply)
       var restored = Vector.empty[Centis]
       val start = Centis(6000)
-      for (end <- times) {
+      for (end <- times)
         val binary = clockHistory.writeSide(start, restored :+ end, false)
         restored = clockHistory.readSide(start, binary, false)
-      }
       restored must beLike(times)
     }
   }
-}
