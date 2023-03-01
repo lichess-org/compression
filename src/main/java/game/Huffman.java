@@ -86,8 +86,8 @@ class Huffman {
         }
 
         return new Node(
-            buildTree(code << 1, bits + 1),
-            buildTree((code << 1) | 1, bits + 1));
+            buildTree(code << 1, bits + 1, phase),
+            buildTree((code << 1) | 1, bits + 1, phase));
     }
 
     // Huffman code for indexes in the legal move list. Precomputed based on
