@@ -877,7 +877,7 @@ class Huffman {
         new Symbol(0b1110001101111111101001010111011, 31), // 255
     };
 
-    private static final Node ROOT_OPENING = buildOpeningTree(0, 0, OPENING);
-    private static final Node ROOT_MIDDLEGAME = buildOpeningTree(0, 0, MIDDLEGAME);
-    private static final Node ROOT_ENDGAME = buildOpeningTree(0, 0, ENDGAME);
+    private static final Node ROOT_OPENING = buildTree(0, 0, Phase.OPENING);
+    private static final Node ROOT_MIDDLEGAME = buildTree(0, 0, Phase.MIDDLEGAME);
+    private static final Node ROOT_ENDGAME = buildTree(0, 0, Phase.ENDGAME);
 }
