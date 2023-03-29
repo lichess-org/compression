@@ -84,7 +84,7 @@ public class Encoder {
                 if (legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(from, legal.from)) {
                     if (!foundMatch) {
                         // Encode and play.
-                        Huffman.write(i, writer);
+                        Huffman.write(i, writer, pgnMoves.length);
                         board.play(legal);
                         foundMatch = true;
                     }
@@ -144,7 +144,7 @@ public class Encoder {
             // Decode and play next move.
             if (i < plies) {
                 legals.sort();
-                Move move = legals.get(Huffman.read(reader));
+                Move move = legals.get(Huffman.read(reader, i));
                 output[i] = san(move, legals);
                 board.play(move);
 
