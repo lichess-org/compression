@@ -37,10 +37,10 @@ class HuffmanPgnTest extends Specification:
       val encoded = Encoder.encode(pgnMoves)
 
       val d1 = Encoder.decode(encoded, 0)
-      d1.unmovedRooks.asScala must_== Set(0, 7, 56, 63)
+      Bitboard.squareSet(d1.unmovedRooks).asScala must_== Set(0, 7, 56, 63)
 
       val d2 = Encoder.decode(encoded, pgnMoves.size)
-      d2.unmovedRooks.asScala must_== Set(0, 7, 56)
+      Bitboard.squareSet(d2.unmovedRooks).asScala must_== Set(0, 7, 56)
 
     "half-move clock" in:
       val pgnMoves = "e4 e5 Nf3 Nc6 Nc3 Nf6 Bb5 d6 O-O Be7 d4 exd4 Nxd4 Bd7 Bg5 O-O Nxc6 bxc6 Bd3 h6 Bh4 Ne8 Bxe7 Qxe7 Qf3 Nf6 Rfe1 Rfe8".split(" ")
