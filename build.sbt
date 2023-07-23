@@ -16,4 +16,5 @@ scalacOptions := Seq(
   "-source:future-migration",
   "-Xtarget:12"
 )
+javacOptions ++= Seq("--release", "17")
 publishTo := Some(Resolver.file("file", new File(sys.props.getOrElse("publishTo", ""))))
