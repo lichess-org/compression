@@ -10,50 +10,45 @@ class HuffmanPgnTest extends Specification:
   def base64ToBytes(str: String): Array[Byte] =
     java.util.Base64.getDecoder.decode(str)
 
-  "game compression" should {
-    "compress and decompress" in {
+  "game compression" should:
+    "compress and decompress" in:
       forall(fixtures) { pgn =>
         val pgnMoves = pgn.split(" ")
         val encoded = Encoder.encode(pgnMoves)
         val decoded = Encoder.decode(encoded, pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
       }
-    }
 
-    "stable format" in {
+    "stable format" in:
       forall(v1 zip fixtures) { case (encoded, pgn) =>
         val pgnMoves = pgn.split(" ")
         val decoded = Encoder.decode(base64ToBytes(encoded), pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
       }
-    }
 
-    "least surprise" in {
+    "least surprise" in:
       val n = 22
       val decoded = Encoder.decode(Array.fill(n)(0.toByte), n)
       decoded.pgnMoves.mkString(" ") must_== "e4 e5 Nf3 Nf6 Nxe5 Nxe4 Nxf7 Kxf7 d4 Nxf2 Kxf2 d5 Nc3 Nc6 Nxd5 Qxd5 Kg1 Nxd4 Qxd4 Qxd4+ Be3 Qxe3#"
-    }
 
-    "unmoved rooks" in {
+    "unmoved rooks" in:
       import scala.jdk.CollectionConverters.*
       val pgnMoves = "d4 h5 c4 Rh6 Nf3 Rh8".split(" ")
       val encoded = Encoder.encode(pgnMoves)
 
       val d1 = Encoder.decode(encoded, 0)
-      d1.unmovedRooks.asScala must_== Set(0, 7, 56, 63)
+      Bitboard.squareSet(d1.unmovedRooks).asScala must_== Set(0, 7, 56, 63)
 
       val d2 = Encoder.decode(encoded, pgnMoves.size)
-      d2.unmovedRooks.asScala must_== Set(0, 7, 56)
-    }
+      Bitboard.squareSet(d2.unmovedRooks).asScala must_== Set(0, 7, 56)
 
-    "half-move clock" in {
+    "half-move clock" in:
       val pgnMoves = "e4 e5 Nf3 Nc6 Nc3 Nf6 Bb5 d6 O-O Be7 d4 exd4 Nxd4 Bd7 Bg5 O-O Nxc6 bxc6 Bd3 h6 Bh4 Ne8 Bxe7 Qxe7 Qf3 Nf6 Rfe1 Rfe8".split(" ")
       val encoded = Encoder.encode(pgnMoves)
       val halfMoveClocks = List(0, 0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 0, 0, 0, 1, 2, 3, 0, 0, 1, 0, 1, 2, 0, 0, 1, 2, 3, 4)
       (0 to pgnMoves.size).map(Encoder.decode(encoded, _).halfMoveClock) must_== halfMoveClocks
-    }
 
-    "last uci" in {
+    "last uci" in:
       val pgnMoves = "e4 e5 Nf3 Nc6 Bc4 Nf6 d4 exd4 O-O Bc5 e5 d5 exf6 dxc4 Re1+ Be6 Ng5 Qxf6 Nxe6 Qxe6".split(" ")
       val encoded = Encoder.encode(pgnMoves)
 
@@ -62,9 +57,8 @@ class HuffmanPgnTest extends Specification:
 
       val decoded = Encoder.decode(encoded, pgnMoves.size)
       Option(decoded.lastUci) must_== Some("f6e6")
-    }
 
-    "position hash 1. e4 d5 2. e5 f5 3. Ke2 Kf7" in {
+    "position hash 1. e4 d5 2. e5 f5 3. Ke2 Kf7" in:
       val pgnMoves = "e4 d5 e5 f5 Ke2 Kf7".split(" ")
       val encoded = Encoder.encode(pgnMoves)
 
@@ -95,9 +89,8 @@ class HuffmanPgnTest extends Specification:
       // 1. e4 d5 2. e5 f5 3. Ke2 Kf7
       val d6 = Encoder.decode(encoded, 6)
       d6.positionHashes must_== hexToBytes("00fdd3" + "652a60" + "22a48b")
-    }
 
-    "position hash 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3" in {
+    "position hash 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3" in:
       val pgnMoves = "a4 b5 h4 b4 c4 bxc3 Ra3".split(" ")
       val encoded = Encoder.encode(pgnMoves)
 
@@ -108,9 +101,8 @@ class HuffmanPgnTest extends Specification:
       // 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3
       val d7 = Encoder.decode(encoded, 7)
       d7.positionHashes must_== hexToBytes("5c3f9b" + "93d326")
-    }
 
-    "position hash threefold" in {
+    "position hash threefold" in:
       // https://lichess.org/V0m3eSGN
       val pgnMoves = "Nf3 d5 d4 c5 dxc5 e6 c4 Bxc5 Nc3 Nf6 e3 O-O cxd5 Nxd5 Nxd5 Qxd5 Qxd5 exd5 Be2 Nc6 a3 Bf5 b4 Bb6 Bb2 Rfd8 Rd1 Rac8 O-O Ne7 Nd4 Bg6 Rc1 Rxc1 Rxc1 Nf5 Bf3 Kf8 Nb3 Nxe3 Bd4 Nc2 Bxb6 axb6 Bd1 Re8 Bxc2 Bxc2 Nd4 Bd3 f3 Bc4 Kf2 Re5 g4 g6 Rc3 Ke7 Re3 Kf6 h4 Rxe3 Kxe3 Ke5 f4+ Kd6 g5 Ke7 Nf3 Ke6 Nd4+ Ke7 Nf3 Ke6 Nd4+ Ke7".split(" ")
       val encoded = Encoder.encode(pgnMoves)
@@ -122,17 +114,15 @@ class HuffmanPgnTest extends Specification:
       val nf3 = "e804e3"
       val g5 = "ef8a0b"
       decoded.positionHashes must_== hexToBytes(threefold + ncheck + ke6 + nf3 + threefold + ncheck + ke6 + nf3 + threefold + g5)
-    }
 
-    "position hash compat" in {
+    "position hash compat" in:
       // https://lichess.org/DoqH1EQP
       val pgnMoves = "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nc6 Nc3 g6 Be3 Bg7 Bc4 Nf6 f3 O-O Qd2 Nd7 O-O-O a5 g4 Nce5 Be2 a4 a3 Nb6 h4 Nbc4 Bxc4 Nxc4 Qf2 Qb6 b3 Nxe3 Qxe3 e5 Nf5 Qxe3+ Nxe3 axb3 cxb3 Rxa3 Kb2 Ra6 h5 h6 hxg6 fxg6 Ned5 Rxf3 Ne7+ Kf7 Nxc8 Ke6 Nxd6 Rf2+ Kb1 Rxd6 Nd5 Rc6 Rc1 Rxc1+ Rxc1 Re2 Rc7 Rxe4 Nb6 Bf8 Rxb7 Rb4 Rb8 Rxb3+ Kc2 Rb5 Rxf8 Rxb6 Rg8 Kf6 Rf8+ Kg5 Rh8 Rd6 Re8 Kxg4 Rxe5 g5 Re3 Kf5".split(" ")
       val encoded = Encoder.encode(pgnMoves)
       val decoded = Encoder.decode(encoded, pgnMoves.size)
       decoded.positionHashes must_== base64ToBytes("oB9I1h1e6YDy")
-    }
 
-    "work with all black legal moves in YycayYfM" in {
+    "work with all black legal moves in YycayYfM" in:
       // Exclude compression as cause of issues with https://lichess.org/YycayYfM
       val prefix = "e4 c6 Nf3 d5 exd5 cxd5 d4 Nc6 c3 Nf6 Bf4 Bg4 Be2 e6 Nbd2 Bd6 Bxd6 Qxd6 O-O O-O Re1 a6 Ne5 Bxe2 Qxe2 Nd7 Nxd7 Qxd7 a4 Rab8 Nf3 b5 axb5 axb5 Ne5 Nxe5 Qxe5 b4 c4 dxc4 Rac1 Rbc8 Qa5 Qb7 Re2 c3 bxc3 bxc3 Rec2 Qe4 Qe5 Qxe5 dxe5 Rc5 f4 Rfc8 Kf2 f6 exf6 gxf6 Ke3"
       val legals = "Kh8 Kf8 Kg7 Kf7 Rf8 Re8 Rd8 Rb8 Ra8 R8c7 R8c6 R5c7 R5c6 Rh5 Rg5 Rf5 Re5+ Rd5 Rb5 Ra5 Rc4 h6 f5 e5 h5".split(" ")
@@ -142,18 +132,16 @@ class HuffmanPgnTest extends Specification:
         val decoded = Encoder.decode(encoded, pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
       }
-    }
 
-    "work with CwdQG2Es" in {
+    "work with CwdQG2Es" in:
       // Exclude compression as cause of https://github.com/ornicar/lila/issues/5594
       val prefix = "c4 e5 g3 h5 Nc3 h4 Bg2 Nf6 d3 Bb4 Bd2 d6 Nf3 h3 Bf1 Nc6 e3 Bg4 Be2 d5 Nxd5 Nxd5 cxd5 Qxd5 Bxb4 Nxb4 Qa4+ c6 Qxb4 Bxf3 Bxf3 Qxf3 Rg1 O-O-O Qe4 Qf6 O-O-O Rd5 f4 Rhd8 Rgf1 Qe6 Kb1 f5 Qc4 e4 d4 Kb8 Rc1 Qe7 Rg1 Qd7 Qc2 Re8 Qe2 Ra5 g4 g6 gxf5 gxf5 Qh5 Rd8 Qh6 c5 Rg7 Qa4 a3 Qb3 Qf6 Rc8 Qd6+ Ka8"
       val pgnMoves = s"$prefix Rxc5 Raxc5".split(" ")
       val encoded = Encoder.encode(pgnMoves)
       val decoded = Encoder.decode(encoded, pgnMoves.size)
       pgnMoves must_== decoded.pgnMoves
-    }
 
-    "pass perft test" in {
+    "pass perft test" in:
       // Running the entire suite can take minutes.
 
       PerftTest.trickyBatch();
@@ -185,8 +173,6 @@ class HuffmanPgnTest extends Specification:
 
       // These tests throw a RuntimeError if they fail.
       true must_== true
-    }
-  }
 
   val fixtures = List(
     "d3 d5 g3 e6 Bg2 Nf6 Nf3 Be7 O-O O-O Re1 a6 e4 c5 e5 Nfd7 d4 Nb6 dxc5 Bxc5 Nc3 N8d7 a4 Be7 a5 Nc4 b3 Ncxe5 Nxe5 Nxe5 Rxe5 Bd6 Re1 Bd7 Bf4 Bc6 Bxd6 Qxd6 Na4 Rad8 Nb6 Rfe8 Ra4 Bxa4 bxa4 Qc5 Qa1 Qxa5 Qd4 Rd6 Nc4 Qb4 Nxd6 Qxd4 Nxe8 Qd2 Rb1 Qxc2 Rxb7 Qxa4 Rb8 Kf8 Nd6+ Ke7 Nf5+ Kf6 Nh4 Qd1+ Bf1 Qd4 Kg2 a5 Rb7 a4 Rxf7+ Kxf7 Nf3 Ke7 Ne5 Kd6 Nf3 Qc4 Nd4 Qc3 Nf5+ Ke5 Ne3 Kf6 Nxd5+ exd5",
