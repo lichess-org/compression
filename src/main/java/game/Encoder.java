@@ -101,15 +101,13 @@ public class Encoder {
     public static class DecodeResult {
         public final String pgnMoves[];
         public final Board board;
-        public final long unmovedRooks;
         public final int halfMoveClock;
         public final byte positionHashes[];
         public final String lastUci;
 
-        public DecodeResult(String pgnMoves[], Board board, long unmovedRooks, int halfMoveClock, byte positionHashes[], String lastUci) {
+        public DecodeResult(String pgnMoves[], Board board, int halfMoveClock, byte positionHashes[], String lastUci) {
             this.pgnMoves = pgnMoves;
             this.board = board;
-            this.unmovedRooks = unmovedRooks;
             this.halfMoveClock = halfMoveClock;
             this.positionHashes = positionHashes;
             this.lastUci = lastUci;
@@ -159,7 +157,6 @@ public class Encoder {
         return new DecodeResult(
             output,
             board,
-            board.castlingRights,
             plies - 1 - lastZeroingPly,
             Arrays.copyOf(positionHashes, 3 * (plies - lastIrreversiblePly)),
             lastUci);
