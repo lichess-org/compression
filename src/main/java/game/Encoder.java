@@ -4,10 +4,6 @@ import org.lichess.compression.BitReader;
 import org.lichess.compression.BitWriter;
 import org.lichess.compression.game.codec.Rans;
 
-import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class Encoder {
     private final Rans rans = new Rans();
 
