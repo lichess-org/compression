@@ -1,19 +1,14 @@
 package org.lichess.compression.game;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
-import java.nio.ByteBuffer;
-
 import org.lichess.compression.BitReader;
 import org.lichess.compression.BitWriter;
+import org.lichess.compression.game.codec.Rans;
+
+import java.util.Arrays;
 
 public class Encoder {
+    private final Rans rans = new Rans();
+
     private static final ThreadLocal<MoveList> moveList = new ThreadLocal<MoveList>() {
         @Override
         protected MoveList initialValue() {
@@ -21,101 +16,27 @@ public class Encoder {
         }
     };
 
-    private static Pattern SAN_PATTERN = Pattern.compile(
-        "([NBKRQ])?([a-h])?([1-8])?x?([a-h][1-8])(?:=([NBRQK]))?[\\+#]?");
-
-    private static Role charToRole(char c) {
-        switch (c) {
-            case 'N': return Role.KNIGHT;
-            case 'B': return Role.BISHOP;
-            case 'R': return Role.ROOK;
-            case 'Q': return Role.QUEEN;
-            case 'K': return Role.KING;
-            default: throw new IllegalArgumentException();
-        }
-    }
-
-    public static byte[] encode(String pgnMoves[]) {
+    public EncodeResult encode(String[] pgnMoves) {
         BitWriter writer = new BitWriter();
-
-        Board board = new Board();
-        MoveList legals = moveList.get();
-
-        for (String pgnMove: pgnMoves) {
-            // Parse SAN.
-            Role role = null, promotion = null;
-            long from = Bitboard.ALL;
-            int to;
-
-            if (pgnMove.startsWith("O-O-O")) {
-                role = Role.KING;
-                from = board.kings;
-                to = Bitboard.lsb(board.rooks & Bitboard.RANKS[board.turn ? 0 : 7]);
-            } else if (pgnMove.startsWith("O-O")) {
-                role = Role.KING;
-                from = board.kings;
-                to = Bitboard.msb(board.rooks & Bitboard.RANKS[board.turn ?  0 : 7]);
-            } else {
-                Matcher matcher = SAN_PATTERN.matcher(pgnMove);
-                if (!matcher.matches()) return null;
-
-                String roleStr = matcher.group(1);
-                role = roleStr == null ? Role.PAWN : charToRole(roleStr.charAt(0));
-
-                if (matcher.group(2) != null) from &= Bitboard.FILES[matcher.group(2).charAt(0) - 'a'];
-                if (matcher.group(3) != null) from &= Bitboard.RANKS[matcher.group(3).charAt(0) - '1'];
-
-                to = Square.square(matcher.group(4).charAt(0) - 'a', matcher.group(4).charAt(1) - '1');
-
-                if (matcher.group(5) != null) {
-                    promotion = charToRole(matcher.group(5).charAt(0));
-                }
-            }
-
-            // Find index in legal moves.
-            board.legalMoves(legals);
-            legals.sort();
-
-            boolean foundMatch = false;
-            int size = legals.size();
-
-            for (int i = 0; i < size; i++) {
-                Move legal = legals.get(i);
-                if (legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(from, legal.from)) {
-                    if (!foundMatch) {
-                        // Encode and play.
-                        Huffman.write(i, writer);
-                        board.play(legal);
-                        foundMatch = true;
-                    }
-                    else return null;
-                }
-            }
-
-            if (!foundMatch) return null;
+        int[] moveIndexes = GameToMoveIndexesConverter.convert(pgnMoves);
+        if (moveIndexes == null) {
+            return null;
         }
-
-        return writer.toArray();
+        rans.resetEncoder();
+        for (int i = moveIndexes.length - 1; i >= 0; i--) {
+            int moveIndex = moveIndexes[i];
+            rans.write(moveIndex, writer);
+        }
+        byte[] encoded = writer.toArray();
+        byte[] encodedReversed = new byte[encoded.length];
+        for (int i = 0; i < encoded.length; i++) {
+            encodedReversed[i] = encoded[encoded.length - (i + 1)];
+        }
+        return new EncodeResult(encodedReversed, rans.getState());
     }
 
-    public static class DecodeResult {
-        public final String pgnMoves[];
-        public final Board board;
-        public final int halfMoveClock;
-        public final byte positionHashes[];
-        public final String lastUci;
-
-        public DecodeResult(String pgnMoves[], Board board, int halfMoveClock, byte positionHashes[], String lastUci) {
-            this.pgnMoves = pgnMoves;
-            this.board = board;
-            this.halfMoveClock = halfMoveClock;
-            this.positionHashes = positionHashes;
-            this.lastUci = lastUci;
-        }
-    }
-
-    public static DecodeResult decode(byte input[], int plies) {
-        BitReader reader = new BitReader(input);
+    public DecodeResult decode(EncodeResult input, int plies) {
+        BitReader reader = new BitReader(input.code);
 
         String output[] = new String[plies];
 
@@ -131,6 +52,8 @@ public class Encoder {
         byte positionHashes[] = new byte[3 * (plies + 1)];
         setHash(positionHashes, -1, board.zobristHash());
 
+        rans.initializeDecoder(input.state);
+
         for (int i = 0; i <= plies; i++) {
             if (0 < i || i < plies) board.legalMoves(legals);
 
@@ -142,7 +65,7 @@ public class Encoder {
             // Decode and play next move.
             if (i < plies) {
                 legals.sort();
-                Move move = legals.get(Huffman.read(reader));
+                Move move = legals.get(rans.read(reader));
                 output[i] = san(move, legals);
                 board.play(move);
 
@@ -160,6 +83,32 @@ public class Encoder {
             plies - 1 - lastZeroingPly,
             Arrays.copyOf(positionHashes, 3 * (plies - lastIrreversiblePly)),
             lastUci);
+    }
+
+    public static class EncodeResult {
+        public final byte[] code;
+        public final int state;
+
+        public EncodeResult(byte[] code, int state) {
+            this.code = code;
+            this.state = state;
+        }
+    }
+
+    public static class DecodeResult {
+        public final String[] pgnMoves;
+        public final Board board;
+        public final int halfMoveClock;
+        public final byte[] positionHashes;
+        public final String lastUci;
+
+        public DecodeResult(String[] pgnMoves, Board board, int halfMoveClock, byte[] positionHashes, String lastUci) {
+            this.pgnMoves = pgnMoves;
+            this.board = board;
+            this.halfMoveClock = halfMoveClock;
+            this.positionHashes = positionHashes;
+            this.lastUci = lastUci;
+        }
     }
 
     private static String san(Move move, MoveList legals) {
