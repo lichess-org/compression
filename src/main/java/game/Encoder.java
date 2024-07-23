@@ -35,7 +35,7 @@ public class Encoder {
         }
     }
 
-    public static byte[] encode(String pgnMoves[]) {
+    public byte[] encode(String pgnMoves[]) {
         BitWriter writer = new BitWriter();
 
         Board board = new Board();
@@ -114,7 +114,7 @@ public class Encoder {
         }
     }
 
-    public static DecodeResult decode(byte input[], int plies) {
+    public DecodeResult decode(byte input[], int plies) {
         BitReader reader = new BitReader(input);
 
         String output[] = new String[plies];
