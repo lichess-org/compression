@@ -10,9 +10,9 @@ public class OpeningTrie {
     private final int maxOpeningPlies;
     private final Trie<String, BitSet> openingTrie;
 
-    public OpeningTrie(Map<String, Integer> openingToCode, int bitVectorLength) {
+    public OpeningTrie(Map<String, Integer> openingToCode) {
         this.maxOpeningPlies = getMaxOpeningPlies(openingToCode);
-        this.bitVectorLength = bitVectorLength;
+        this.bitVectorLength = getLowestSufficientBitVectorLength(openingToCode.values().toArray(Integer[]::new));
         this.openingTrie = buildOpeningTrie(openingToCode);
     }
 
@@ -61,6 +61,11 @@ public class OpeningTrie {
                 .map(opening -> opening.split("\\s+").length)
                 .max(Integer::compare)
                 .orElse(0);
+    }
+
+    private int getLowestSufficientBitVectorLength(Integer integers[]) {
+        int max = Arrays.stream(integers).max(Integer::compare).orElse(0);
+        return (31 - Integer.numberOfLeadingZeros(max)) + 1;
     }
 
     private Trie<String, BitSet> buildOpeningTrie(Map<String, Integer> openingToCode) {
