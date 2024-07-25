@@ -3,6 +3,9 @@ package org.lichess.compression.game;
 import org.apache.commons.collections4.Trie;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class OpeningTrie {
@@ -14,6 +17,11 @@ public class OpeningTrie {
         this.maxOpeningPlies = getMaxOpeningPlies(openingToCode);
         this.bitVectorLength = getLowestSufficientBitVectorLength(openingToCode.values().toArray(Integer[]::new));
         this.openingTrie = buildOpeningTrie(openingToCode);
+    }
+
+    public static OpeningTrie mostCommonOpenings() {
+        Map<String, Integer> mostCommonOpeningToCode = getMostCommonOpeningToCode();
+        return new OpeningTrie(mostCommonOpeningToCode);
     }
 
     public BitSet get(String opening) {
@@ -93,5 +101,21 @@ public class OpeningTrie {
             bitVector.set(index, jThBit);
         }
         return bitVector;
+    }
+
+    private static Map<String, Integer> getMostCommonOpeningToCode() {
+        try {
+            Path filepath = Path.of("src/main/java/game/most_common_opening_moves_sorted.txt");
+            List<String> mostCommonOpenings = Files.readAllLines(filepath);
+            Map<String, Integer> mostCommonOpeningToCode = new HashMap<>();
+            int i = 0;
+            for (String opening: mostCommonOpenings) {
+                mostCommonOpeningToCode.put(opening, i);
+                i++;
+            }
+            return mostCommonOpeningToCode;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

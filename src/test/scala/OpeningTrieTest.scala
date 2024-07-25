@@ -12,7 +12,7 @@ class OpeningTrieTest extends Specification:
           "d4 d5" -> 1,
           "d4 Sf6" -> 2)
         val bitVectorLength = 3
-        val openingTrie = OpeningTrie(openingToCode.asJava, bitVectorLength)
+        val openingTrie = OpeningTrie(openingToCode.asJava)
         val pgnMoves = "d4 Sf6 c4".split(" ")
         val longestCommonOpening = openingTrie.findLongestCommonOpening(pgnMoves)
         val expectedLongestCommonOpening = "d4 Sf6"
