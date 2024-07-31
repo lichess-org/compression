@@ -50,6 +50,59 @@ final class Move implements Comparable<Move> {
     public int compareTo(Move other) {
         return other.score - this.score;
     }
+    
+    public String san(MoveList legals) {
+        switch (this.type) {
+            case Move.NORMAL:
+            case Move.EN_PASSANT:
+                StringBuilder builder = new StringBuilder(6);
+                builder.append(this.role.symbol);
+
+                // From.
+                if (role != Role.PAWN) {
+                    boolean file = false, rank = false;
+                    long others = 0;
+
+                    for (int i = 0; i < legals.size(); i++) {
+                        Move other = legals.get(i);
+                        if (other.role == this.role && other.to == this.to && other.from != this.from) {
+                            others |= 1L << other.from;
+                        }
+                    }
+
+                    if (others != 0) {
+                        if ((others & Bitboard.RANKS[Square.rank(this.from)]) != 0) file = true;
+                        if ((others & Bitboard.FILES[Square.file(this.from)]) != 0) rank = true;
+                        else file = true;
+                    }
+
+                    if (file) builder.append((char) (Square.file(this.from) + 'a'));
+                    if (rank) builder.append((char) (Square.rank(this.from) + '1'));
+                } else if (this.capture) {
+                    builder.append((char) (Square.file(this.from) + 'a'));
+                }
+
+                // Capture.
+                if (this.capture) builder.append('x');
+
+                // To.
+                builder.append((char) (Square.file(this.to) + 'a'));
+                builder.append((char) (Square.rank(this.to) + '1'));
+
+                // Promotion.
+                if (this.promotion != null) {
+                    builder.append('=');
+                    builder.append(this.promotion.symbol);
+                }
+
+                return builder.toString();
+
+            case Move.CASTLING:
+                return this.from < this.to ? "O-O" : "O-O-O";
+        }
+
+        return "--";
+    }
 
     public String uci() {
         int to = this.to;
