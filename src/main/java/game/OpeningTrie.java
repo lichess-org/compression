@@ -11,7 +11,7 @@ import java.util.*;
 public class OpeningTrie {
     private final int bitVectorLength;
     private final int maxOpeningPlies;
-    private final Trie<String, BitSet> openingTrie;
+    private final Trie<String, Integer> openingTrie;
 
     public OpeningTrie(Map<String, Integer> openingToCode) {
         this.maxOpeningPlies = getMaxOpeningPlies(openingToCode);
@@ -24,8 +24,16 @@ public class OpeningTrie {
         return new OpeningTrie(mostCommonOpeningToCode);
     }
 
-    public BitSet get(String opening) {
+    public int get(String opening) {
         return openingTrie.get(opening);
+    }
+    
+    public Set<String> keySet() {
+        return openingTrie.keySet();
+    }
+    
+    public int getBitVectorLength() {
+        return bitVectorLength;
     }
 
     public Optional<String> findLongestCommonOpening(String pgnMoves[]) {
@@ -73,34 +81,22 @@ public class OpeningTrie {
 
     private int getLowestSufficientBitVectorLength(Integer integers[]) {
         int max = Arrays.stream(integers).max(Integer::compare).orElse(0);
-        return (31 - Integer.numberOfLeadingZeros(max)) + 1;
+        return bitWidth(max);
     }
 
-    private Trie<String, BitSet> buildOpeningTrie(Map<String, Integer> openingToCode) {
-        Trie<String, BitSet> openingTrie = new PatriciaTrie<>();
+    private Trie<String, Integer> buildOpeningTrie(Map<String, Integer> openingToCode) {
+        Trie<String, Integer> openingTrie = new PatriciaTrie<>();
         for (String opening : openingToCode.keySet()) {
-            try {
-                int code = openingToCode.get(opening);
-                BitSet bitVector = convertIntToBitVector(code);
-                openingTrie.put(opening, bitVector);
-            } catch (IllegalArgumentException e) {
+            int code = openingToCode.get(opening);
+            if (bitWidth(code) <= bitVectorLength) {
+                openingTrie.put(opening, code);
             }
         }
         return openingTrie;
     }
 
-    private BitSet convertIntToBitVector(int i) throws IllegalArgumentException {
-        if (i > (1 << bitVectorLength) - 1) {
-            String errorMessage = String.format("The integer %d is too large to fit into %d bits", i, bitVectorLength);
-            throw new IllegalArgumentException(errorMessage);
-        }
-        BitSet bitVector = new BitSet();
-        int index = 0;
-        for (int j = bitVectorLength - 1; j >= 0; j--) {
-            boolean jThBit = ((i >> j) & 1) == 1;
-            bitVector.set(index, jThBit);
-        }
-        return bitVector;
+    private int bitWidth(int i) {
+        return (31 - Integer.numberOfLeadingZeros(i)) + 1;
     }
 
     private static Map<String, Integer> getMostCommonOpeningToCode() {
