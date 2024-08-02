@@ -37,37 +37,35 @@ public class OpeningTrie {
     }
 
     public Optional<String> findLongestCommonOpening(String pgnMoves[]) {
-        String openingMoves[] = Arrays.copyOf(pgnMoves, maxOpeningPlies);
-        Optional<String> currentLongestCommonOpening = Optional.empty();
-        long currentLongestCommonOpeningLength = 0;
-        int fromIndex = 0;
-        int toIndex = openingMoves.length;
-        while (toIndex >= fromIndex) {
-            int middleIndex = Math.floorDiv(fromIndex + toIndex, 2);
-            StringBuilder openingBuilder = new StringBuilder();
-            for (int i = 0; i <= middleIndex; i++) {
-                openingBuilder.append(openingMoves[i]);
-                openingBuilder.append(' ');
-            }
+        int argMax = -1;
+        StringBuilder openingBuilder = new StringBuilder();
+        for (int i = 0; i < maxOpeningPlies; i++) {
+            openingBuilder.append(pgnMoves[i]);
             String opening = openingBuilder.toString();
-            Set<String> commonOpenings = openingTrie.prefixMap(opening).keySet();
-            if (commonOpenings.isEmpty()) {
-                toIndex = middleIndex - 1;
+            boolean foundLongerCommonOpening = !openingTrie.prefixMap(opening).isEmpty();
+            if (foundLongerCommonOpening) {
+                argMax = i;
             }
             else {
-                String longestCommonOpening = commonOpenings
-                        .stream()
-                        .max(Comparator.comparingLong(o -> o.chars().filter(c -> c == ' ').count()))
-                        .orElseThrow();
-                long longestCommonOpeningLength = longestCommonOpening.chars().filter(c -> c == ' ').count();
-                if (longestCommonOpeningLength > currentLongestCommonOpeningLength) {
-                    currentLongestCommonOpening = Optional.of(longestCommonOpening);
-                    currentLongestCommonOpeningLength = longestCommonOpeningLength;
-                }
-                fromIndex = middleIndex + 1;
+                break;
+            }
+            openingBuilder.append(' ');
+        }
+        if (argMax == -1) {
+            return Optional.empty();
+        }
+        StringBuilder longestCommonOpeningBuilder = new StringBuilder();
+        for (int i = 0; i <= argMax; i++) {
+            longestCommonOpeningBuilder.append(pgnMoves[i]);
+            if (i < argMax) {
+                longestCommonOpeningBuilder.append(' ');
             }
         }
-        return currentLongestCommonOpening;
+        String longestCommonOpening = longestCommonOpeningBuilder.toString();
+        if (openingTrie.containsKey(longestCommonOpening)) {
+            return Optional.of(longestCommonOpening);
+        }
+        return Optional.empty();
     }
 
     private int getMaxOpeningPlies(Map<String, Integer> openingToCode) {
