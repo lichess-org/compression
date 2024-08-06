@@ -1,10 +1,8 @@
 package org.lichess.compression.game;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -21,13 +19,31 @@ public class Encoder {
         }
     };
 
+    private final OpeningTrie openingTrie = OpeningTrie.mostCommonOpenings();
+
     public byte[] encode(String pgnMoves[]) {
         BitWriter writer = new BitWriter();
+
+        Optional<String> longestCommonOpening = openingTrie.findLongestCommonOpening(pgnMoves);
+        longestCommonOpening.ifPresentOrElse(
+                opening -> {
+                    writer.writeBits(1, 1);
+                    writer.writeBits(openingTrie.get(opening), openingTrie.getBitVectorLength());
+                },
+                () -> writer.writeBits(0, 1));
+
+        long numPliesLongestCommonOpening = longestCommonOpening
+                .map(opening -> opening
+                        .chars()
+                        .filter(c -> c == ' ')
+                        .count())
+                .orElse(0L);
 
         Board board = new Board();
         MoveList legals = moveList.get();
 
-        for (String pgnMove: pgnMoves) {
+        for (int ply = 0; ply < pgnMoves.length; ply++) {
+            String pgnMove = pgnMoves[ply];
             // Parse SAN.
             SAN sanMove = SANParser.parse(pgnMove, board);
             if (sanMove == null) return null;
@@ -35,27 +51,38 @@ public class Encoder {
             // Find index in legal moves.
             board.legalMoves(legals);
             legals.sort();
-
-            boolean foundMatch = false;
-            int size = legals.size();
-
-            for (int i = 0; i < size; i++) {
+            
+            OptionalInt correctIndex = findSanInLegalMoves(sanMove, legals);
+            if (correctIndex.isPresent()) {
+                int i = correctIndex.getAsInt();
                 Move legal = legals.get(i);
-                if (legal.role == sanMove.role() && legal.to == sanMove.to() && legal.promotion == sanMove.promotion() && Bitboard.contains(sanMove.from(), legal.from)) {
-                    if (!foundMatch) {
-                        // Encode and play.
-                        Huffman.write(i, writer);
-                        board.play(legal);
-                        foundMatch = true;
-                    }
-                    else return null;
-                }
+                if (ply >= numPliesLongestCommonOpening) Huffman.write(i, writer);
+                board.play(legal);
             }
-
-            if (!foundMatch) return null;
+            else {
+                return null;
+            }
         }
 
         return writer.toArray();
+    }
+    
+    private OptionalInt findSanInLegalMoves(SAN sanMove, MoveList legals) {
+        boolean foundMatch = false;
+        int size = legals.size();
+        OptionalInt correctIndex = OptionalInt.empty();
+        for (int i = 0; i < size; i++) {
+            Move legal = legals.get(i);
+            if (legal.role == sanMove.role() && legal.to == sanMove.to() && legal.promotion == sanMove.promotion() && Bitboard.contains(sanMove.from(), legal.from)) {
+                if (!foundMatch) {
+                    // Encode and play.
+                    foundMatch = true;
+                    correctIndex = OptionalInt.of(i);
+                }
+                else return OptionalInt.empty();
+            }
+        }
+        return correctIndex;
     }
 
     public static class DecodeResult {
@@ -78,6 +105,25 @@ public class Encoder {
         BitReader reader = new BitReader(input);
 
         String output[] = new String[plies];
+        
+        long numPliesDecodedOpening = 0L;
+
+        if (reader.readBits(1) == 1) {
+            int code = reader.readBits(openingTrie.getBitVectorLength());
+            Optional<String> decodedOpening = openingTrie.getFirstOpeningMappingToCode(code);
+            decodedOpening.ifPresent(opening -> {
+               String moves[] = opening.split(" ");
+               for (int i = 0; i < Math.min(plies, moves.length); i++) {
+                   output[i] = moves[i];
+               }
+            });
+            numPliesDecodedOpening = decodedOpening
+                    .map(opening -> opening
+                            .chars()
+                            .filter(c -> c == ' ')
+                            .count())
+                    .orElse(0L);
+        }
 
         Board board = new Board();
         MoveList legals = moveList.get();
@@ -102,8 +148,16 @@ public class Encoder {
             // Decode and play next move.
             if (i < plies) {
                 legals.sort();
-                Move move = legals.get(Huffman.read(reader));
-                output[i] = move.san(legals);
+                Move move;
+                if (i >= numPliesDecodedOpening) {
+                    move = legals.get(Huffman.read(reader));
+                    output[i] = move.san(legals);
+                }
+                else {
+                    SAN sanMove = SANParser.parse(output[i], board);
+                    int correctIndex = findSanInLegalMoves(sanMove, legals).getAsInt();
+                    move = legals.get(correctIndex);
+                }
                 board.play(move);
 
                 if (move.isZeroing()) lastZeroingPly = i;

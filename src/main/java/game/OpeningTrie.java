@@ -27,9 +27,14 @@ public class OpeningTrie {
     public int get(String opening) {
         return openingTrie.get(opening);
     }
-    
-    public Set<String> keySet() {
-        return openingTrie.keySet();
+
+    public Optional<String> getFirstOpeningMappingToCode(int code) {
+        for (String opening: openingTrie.keySet()) {
+            if (openingTrie.get(opening) == code) {
+                return Optional.of(opening);
+            }
+        }
+        return Optional.empty();
     }
     
     public int getBitVectorLength() {
