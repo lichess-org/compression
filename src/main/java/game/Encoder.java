@@ -3,10 +3,6 @@ package org.lichess.compression.game;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
-import java.nio.ByteBuffer;
 
 import org.lichess.compression.BitReader;
 import org.lichess.compression.BitWriter;
