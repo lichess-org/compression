@@ -14,99 +14,100 @@ class HuffmanPgnTest extends Specification:
     "compress and decompress" in:
       forall(fixtures) { pgn =>
         val pgnMoves = pgn.split(" ")
-        val encoded = Encoder.encode(pgnMoves)
-        val decoded = Encoder.decode(encoded, pgnMoves.size)
-        pgnMoves must_== decoded.pgnMoves
-      }
-
-    "stable format" in:
-      forall(v1 zip fixtures) { case (encoded, pgn) =>
-        val pgnMoves = pgn.split(" ")
-        val decoded = Encoder.decode(base64ToBytes(encoded), pgnMoves.size)
+        val encoder = Encoder()
+        val encoded = encoder.encode(pgnMoves)
+        val decoded = encoder.decode(encoded, pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
       }
 
     "least surprise" in:
       val n = 22
-      val decoded = Encoder.decode(Array.fill(n)(0.toByte), n)
+      val encoder = Encoder()
+      val decoded = encoder.decode(Array.fill(n)(0.toByte), n)
       decoded.pgnMoves.mkString(" ") must_== "e4 e5 Nf3 Nf6 Nxe5 Nxe4 Nxf7 Kxf7 d4 Nxf2 Kxf2 d5 Nc3 Nc6 Nxd5 Qxd5 Kg1 Nxd4 Qxd4 Qxd4+ Be3 Qxe3#"
 
     "unmoved rooks" in:
       import scala.jdk.CollectionConverters.*
       val pgnMoves = "d4 h5 c4 Rh6 Nf3 Rh8".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
 
-      val d1 = Encoder.decode(encoded, 0)
+      val d1 = encoder.decode(encoded, 0)
       Bitboard.squareSet(d1.board.castlingRights).asScala must_== Set(0, 7, 56, 63)
 
-      val d2 = Encoder.decode(encoded, pgnMoves.size)
+      val d2 = encoder.decode(encoded, pgnMoves.size)
       Bitboard.squareSet(d2.board.castlingRights).asScala must_== Set(0, 7, 56)
 
     "half-move clock" in:
       val pgnMoves = "e4 e5 Nf3 Nc6 Nc3 Nf6 Bb5 d6 O-O Be7 d4 exd4 Nxd4 Bd7 Bg5 O-O Nxc6 bxc6 Bd3 h6 Bh4 Ne8 Bxe7 Qxe7 Qf3 Nf6 Rfe1 Rfe8".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
       val halfMoveClocks = List(0, 0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 0, 0, 0, 1, 2, 3, 0, 0, 1, 0, 1, 2, 0, 0, 1, 2, 3, 4)
-      (0 to pgnMoves.size).map(Encoder.decode(encoded, _).halfMoveClock) must_== halfMoveClocks
+      (0 to pgnMoves.size).map(encoder.decode(encoded, _).halfMoveClock) must_== halfMoveClocks
 
     "last uci" in:
       val pgnMoves = "e4 e5 Nf3 Nc6 Bc4 Nf6 d4 exd4 O-O Bc5 e5 d5 exf6 dxc4 Re1+ Be6 Ng5 Qxf6 Nxe6 Qxe6".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
 
-      val empty = Encoder.decode(encoded, 0)
+      val empty = encoder.decode(encoded, 0)
       Option(empty.lastUci) must_== None
 
-      val decoded = Encoder.decode(encoded, pgnMoves.size)
+      val decoded = encoder.decode(encoded, pgnMoves.size)
       Option(decoded.lastUci) must_== Some("f6e6")
 
     "position hash 1. e4 d5 2. e5 f5 3. Ke2 Kf7" in:
       val pgnMoves = "e4 d5 e5 f5 Ke2 Kf7".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
 
       // initial position
-      val d0 = Encoder.decode(encoded, 0)
+      val d0 = encoder.decode(encoded, 0)
       d0.positionHashes must_== hexToBytes("463b96")
 
       // 1. e4
-      val d1 = Encoder.decode(encoded, 1)
+      val d1 = encoder.decode(encoded, 1)
       d1.positionHashes must_== hexToBytes("823c9b")
 
       // 1. e4 d5
-      val d2 = Encoder.decode(encoded, 2)
+      val d2 = encoder.decode(encoded, 2)
       d2.positionHashes must_== hexToBytes("0756b9")
 
       // 1. e4 d5 2. e5
-      val d3 = Encoder.decode(encoded, 3)
+      val d3 = encoder.decode(encoded, 3)
       d3.positionHashes must_== hexToBytes("662faf")
 
       // 1. e4 d5 2. e5 f5 (en passant matters)
-      val d4 = Encoder.decode(encoded, 4)
+      val d4 = encoder.decode(encoded, 4)
       d4.positionHashes must_== hexToBytes("22a48b")
 
       // 1. e4 d5 2. e5 f5 3. Ke2
-      val d5 = Encoder.decode(encoded, 5)
+      val d5 = encoder.decode(encoded, 5)
       d5.positionHashes must_== hexToBytes("652a60" + "22a48b")
 
       // 1. e4 d5 2. e5 f5 3. Ke2 Kf7
-      val d6 = Encoder.decode(encoded, 6)
+      val d6 = encoder.decode(encoded, 6)
       d6.positionHashes must_== hexToBytes("00fdd3" + "652a60" + "22a48b")
 
     "position hash 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3" in:
       val pgnMoves = "a4 b5 h4 b4 c4 bxc3 Ra3".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
 
       // 1. a4 b5 2. h4 b4 3. c4
-      val d5 = Encoder.decode(encoded, 5)
+      val d5 = encoder.decode(encoded, 5)
       d5.positionHashes must_== hexToBytes("3c8123")
 
       // 1. a4 b5 2. h4 b4 3. c4 bxc3 4. Ra3
-      val d7 = Encoder.decode(encoded, 7)
+      val d7 = encoder.decode(encoded, 7)
       d7.positionHashes must_== hexToBytes("5c3f9b" + "93d326")
 
     "position hash threefold" in:
       // https://lichess.org/V0m3eSGN
       val pgnMoves = "Nf3 d5 d4 c5 dxc5 e6 c4 Bxc5 Nc3 Nf6 e3 O-O cxd5 Nxd5 Nxd5 Qxd5 Qxd5 exd5 Be2 Nc6 a3 Bf5 b4 Bb6 Bb2 Rfd8 Rd1 Rac8 O-O Ne7 Nd4 Bg6 Rc1 Rxc1 Rxc1 Nf5 Bf3 Kf8 Nb3 Nxe3 Bd4 Nc2 Bxb6 axb6 Bd1 Re8 Bxc2 Bxc2 Nd4 Bd3 f3 Bc4 Kf2 Re5 g4 g6 Rc3 Ke7 Re3 Kf6 h4 Rxe3 Kxe3 Ke5 f4+ Kd6 g5 Ke7 Nf3 Ke6 Nd4+ Ke7 Nf3 Ke6 Nd4+ Ke7".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
-      val decoded = Encoder.decode(encoded, pgnMoves.size)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
+      val decoded = encoder.decode(encoded, pgnMoves.size)
 
       val threefold = "966379"
       val ncheck = "65afff"
@@ -118,8 +119,9 @@ class HuffmanPgnTest extends Specification:
     "position hash compat" in:
       // https://lichess.org/DoqH1EQP
       val pgnMoves = "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nc6 Nc3 g6 Be3 Bg7 Bc4 Nf6 f3 O-O Qd2 Nd7 O-O-O a5 g4 Nce5 Be2 a4 a3 Nb6 h4 Nbc4 Bxc4 Nxc4 Qf2 Qb6 b3 Nxe3 Qxe3 e5 Nf5 Qxe3+ Nxe3 axb3 cxb3 Rxa3 Kb2 Ra6 h5 h6 hxg6 fxg6 Ned5 Rxf3 Ne7+ Kf7 Nxc8 Ke6 Nxd6 Rf2+ Kb1 Rxd6 Nd5 Rc6 Rc1 Rxc1+ Rxc1 Re2 Rc7 Rxe4 Nb6 Bf8 Rxb7 Rb4 Rb8 Rxb3+ Kc2 Rb5 Rxf8 Rxb6 Rg8 Kf6 Rf8+ Kg5 Rh8 Rd6 Re8 Kxg4 Rxe5 g5 Re3 Kf5".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
-      val decoded = Encoder.decode(encoded, pgnMoves.size)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
+      val decoded = encoder.decode(encoded, pgnMoves.size)
       decoded.positionHashes must_== base64ToBytes("oB9I1h1e6YDy")
 
     "work with all black legal moves in YycayYfM" in:
@@ -128,8 +130,9 @@ class HuffmanPgnTest extends Specification:
       val legals = "Kh8 Kf8 Kg7 Kf7 Rf8 Re8 Rd8 Rb8 Ra8 R8c7 R8c6 R5c7 R5c6 Rh5 Rg5 Rf5 Re5+ Rd5 Rb5 Ra5 Rc4 h6 f5 e5 h5".split(" ")
       forall(legals) { legal =>
         val pgnMoves = (prefix + " " + legal).split(" ")
-        val encoded = Encoder.encode(pgnMoves)
-        val decoded = Encoder.decode(encoded, pgnMoves.size)
+        val encoder = Encoder()
+        val encoded = encoder.encode(pgnMoves)
+        val decoded = encoder.decode(encoded, pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
       }
 
@@ -137,8 +140,9 @@ class HuffmanPgnTest extends Specification:
       // Exclude compression as cause of https://github.com/ornicar/lila/issues/5594
       val prefix = "c4 e5 g3 h5 Nc3 h4 Bg2 Nf6 d3 Bb4 Bd2 d6 Nf3 h3 Bf1 Nc6 e3 Bg4 Be2 d5 Nxd5 Nxd5 cxd5 Qxd5 Bxb4 Nxb4 Qa4+ c6 Qxb4 Bxf3 Bxf3 Qxf3 Rg1 O-O-O Qe4 Qf6 O-O-O Rd5 f4 Rhd8 Rgf1 Qe6 Kb1 f5 Qc4 e4 d4 Kb8 Rc1 Qe7 Rg1 Qd7 Qc2 Re8 Qe2 Ra5 g4 g6 gxf5 gxf5 Qh5 Rd8 Qh6 c5 Rg7 Qa4 a3 Qb3 Qf6 Rc8 Qd6+ Ka8"
       val pgnMoves = s"$prefix Rxc5 Raxc5".split(" ")
-      val encoded = Encoder.encode(pgnMoves)
-      val decoded = Encoder.decode(encoded, pgnMoves.size)
+      val encoder = Encoder()
+      val encoded = encoder.encode(pgnMoves)
+      val decoded = encoder.decode(encoded, pgnMoves.size)
       pgnMoves must_== decoded.pgnMoves
 
     "pass perft test" in:
@@ -289,121 +293,4 @@ class HuffmanPgnTest extends Specification:
     "d4 e6 c4 d5 Nf3 c6 Nc3 Bd6 e3 f5 Bd3 Nf6 Qc2 O-O O-O Bd7 c5 Bc7 b4 Be8 Ng5 Ne4 Nxe6 Qh4 Nxf8 Qxh2#",
     "e4 b6 d4 Bb7 Bd3 e6 c4 Bb4+ Nc3 Bxc3+ bxc3 h6 Nf3 Nf6 Qe2 O-O O-O d6 h3 Nbd7 a4 e5 Re1 a5 Nh2 Nh7 d5 Nc5 Bc2 Bc8 f4 Qh4 Rf1 Nf6 fxe5 dxe5 Nf3 Qg3 Kh1",
     "e4 d5 exd5 Qxd5 Nc3 Qd8 Bc4 Nf6 d3 Bg4 f3 Bf5 Be3 e6 Nge2 c6 Ng3 Bg6 Qd2 Bd6 Nce4 Nxe4 Nxe4 Bc7 Bb3 Ba5 c3 Bxe4 fxe4 O-O O-O-O b5 h4 Bb6 d4 Nd7 g4 c5 g5 cxd4 Bxd4 Bxd4 Qxd4 Nb8 Qe3 Qc7"
-  )
-
-  val v1 = List(
-    "7qasJezzPJK15lj9CbbYheEA63S9DE37qYM/HcONsibhbJM/2xJqSwr/nVAX79Rn3x/vsAA=",
-    "KjTb/Zzt6FTIF/lVyHjtbeOzYeV9uhNzDfuV/699pPx/1XWiwVs31MA=",
-    "Mp0orWLvti0lxmh6kBmGf5IqTYEAdXvgx/3Jnivwhju9A6ImWcvOcc9n1FmEwA==",
-    "MhU6x0SImzC1OgAhmyHHSZLcNtUGucvp9TLlpoA=",
-    "PDdknk9du7oA11Y1tRdCpolRK+yysDyJ9z1Q",
-    "s3sbOnTq9vX15Npv7x4fJ97xFroPTbOLG+n9Q3639s5WH/7BQA==",
-    "Hw15mn6XrBtZGTjK0A==",
-    "Ugpnwa0n6QjIy8kUOHvF4vWAfNWGLlSpu4AGDXj+CUAfbz9YqN7Jq1sqLU2rqQmcfA==",
-    "19Sn95fufWzCaFjfjA==",
-    "Hw3FxvG9IvO817llUSMRAfV5xvfz/7Ez4kfrQWMgfg1NZz1n1D9gW0AqLQ==",
-    "LM7AHuV0bWvXpOGmfCsWvct0pUMzO1AV0XTqwBX68pFIq0XP0rvp2g==",
-    "zkmxSlt9/tqJ03f9B/Lbv8WnSSTNFLf11Wuz8dxe1//QCb9wv4i1/3JwIZWzXWaTwgMK9vGUr/ZVqt91WbzrlUA=",
-    "CGtPQ+eYf80+X/0C63rNmndIuJCBKzcx5b4u4nm3ha8Ul3updJ5mjhqLG4eUexdgdHNLHYWqpOg=",
-    "k8XmH/XqWTUtzb0FfAEODSU9gT2plavcE2l1IS+2kEcMmOdTr4P22vtsvWFnPMz9Zf3Ly1mBM0VfUV4TK/ZCZzu3AA==",
-    "k+fO9m7ugAzYRzplfkRc++fc6BmXoIFCkQ9zO7c6",
-    "BUL1i68rpzjsWPUJ2Pdk92pZJ6nCGB72yZwpuLCz0C7bn9wXPruaw0gbdav0rZ1ffFWg6A==",
-    "LOthhPsUt3Z477iYLiHYfBdAEvKxfMyDjTPrr0K7AhTjndfDLSzmoMa8tqkb30g=",
-    "AnSG1kzU5Yq/3W1r8pc++W3e8G/rdkvOFn93x/v+rkwd0PU11u9ULwgHmeCdv3BHXteI712hWYNcoA==",
-    "PDfxJxP78de/6HhPgcrkATDkByNP67npuEF2FeGmmgiA",
-    "mArWBeET583tvuNqHEQkAbLGO4J/OeGnlzebr+lIgaBv7cA=",
-    "ty73VQUu24W1KDl7tqeOC+TKoueDkJ+WLfYnAkA=",
-    "MF7OrJjpv1PueNH5uAZ4958JYA==",
-    "KnCPQhSuzsnzxJbZrPH/mK3pkFuPLbPWc98A",
-    "ysrQlz6bg1S5bgjzeeXJQA==",
-    "LFb0KkXcNZ3f2PBtQhABf4A=",
-    "Bg1PYNwxwIj/tXo=",
-    "KmPn/CTPMXaQz7Uae8eQ4uevEMA=",
-    "A618/WLNgHe98/vso2VXG9HicZOPF3sqzyMg",
-    "kvv8yK3ZWdJ+Iw/Bbb+r1P9r7H0w3LUN/gza+Y7c9wRAHZA=",
-    "k/0760KrEmRDhIzLFWHxrVuiH9Kr3+50x038r7eBXSSkP99u68l7WrvrGTlFQf6QKoMIXXUdWNE7AA==",
-    "Andh9gQNgU0xiZBfIqcgy86PbN9q/+SAuig=",
-    "K+8IExxnDUMbfTwtmne8O0su",
-    "CVSUMTl6Sc8/JxJ+pfX1Xa7lah9meFtCcE9FwUA=",
-    "kDe8/E+orRd88dwxtGhpTW9ARh5rEb/mYc4gmoA=",
-    "LNob+KTfOVRolcRnunH82UEhJgrmfdm1znTvc+Bj8NIM1PQC1GHviouxfWOuL2gdrjoXyqS4",
-    "VeEdjtGlsxcoa8Utvm92IsOEa866aNNLKkLxsA==",
-    "qCefpoSA3lN73H4DrIi8nznXtZhWpe47p0iSzXItfUA=",
-    "Hw3Gq73PyY3AB+unnhf0ucss",
-    "kN+zTf+9SWT92zEowhgma9xPUYw=",
-    "PBf5IfZfEMt13fvnNv5H38D16TuLwbXtaevbTQ==",
-    "WGHCpp5fvgWYfrjTWMjJL8VKerZcArLrTuM12HsGwZ756ZZKwtz6OLf+Qdct0L7EveqUsA==",
-    "KPwAiyY70yvnGX5k+YV/2S7n/VpPi9aA",
-    "yCVgblV+5/46gWBj3m0/sxpu/kw2mIS118A=",
-    "LI2BEkK/7hW4MfwSJF6A",
-    "PDfxISLpH9w5P6PcHee9xw1ecXry8azxeIh/+MhwB+5iKMg=",
-    "AKXNwe8rYUQnjecT",
-    "Mijq//lj3oo9eBUDTsjcpBiZAnhnUgB7tu4A",
-    "KPzZxNGQT1m2uxXaT8vP57BM2Av+FPkDJoxyeA/00A==",
-    "KKlErsNbydzbX/cHneNuv2SepoijLP4Gl79+gA==",
-    "ijQARzN4ef+W+bKHatW6bfjv17zlvQoB7dL/+vg0jvcLgA==",
-    "Hw3/RL0zFev0EarLk7tLPO80aL0=",
-    "Ar8BUYsLNYtZ8NrZA8/24fP35eGc1r1t+1nluSNy5A==",
-    "Cc1+r2sEPuqnP64hvbaJANL98J6A",
-    "KMeJCkLZxEJA0vfbz905zbTT635tQhDf3+rg",
-    "PP2up0ynHt0htYcq6g==",
-    "t3q/4EMWf6sv5lPOqqKb4I+GgA==",
-    "wW+5xenkBqqSUBxw51HLWE/rnlVRT4+Bu+oW3I33qN1Q",
-    "FjvmdkNJVB5+ZBO/Nf5b4Uxzexnq5edsx8Q=",
-    "yrTf297tPr69zzvTWISECwPNwfgD4A==",
-    "k+bvxZIbt0+pHi14k996oAV+85eGH/GdzCbIcfcaV/D8k/fEctOPbA==",
-    "DGoG0zKWZ3Ri5UseardCAA==",
-    "yNGyvxLz6rDSYlDJxgWfgA==",
-    "AlLU3aquoXcZKTWrbo8hJWj7XP/hAA6+w958dn9g7uphyLQ=",
-    "AnSvMbff/5P/TQW75A==",
-    "PBf5IW1ElYqorh374xIv7ux2P9VkmXDA7Va/h1bMsZ3SKFeGgA==",
-    "AnTzvDYHVmTFtxHydu/Lk5/R09nkJDQ=",
-    "AncICtSWO5R+idYO",
-    "3LKlNwT2x3SA/CYnfbjy7NIBG+uA",
-    "BfkxwR9+wWh31do2pC7h8q0UHVH7PMny+KA=",
-    "zqzheaUYv1au7CqrC6wsSW2s5sduyr8H+CVj0A==",
-    "PDfxH171aqzx7y0S4PCb6pBTbe/ANIaTdQNE",
-    "And38kC6LaCaV9dzuwA=",
-    "PKX6DR2s9l8qbzZz61Zn797XGvrxshsFz90X9xBb37yb9ep6zlfxLfcaoNAnkA==",
-    "Hw3FMUvXQy/dXu2s53zuhEtcTXf/L/Sbj4VvmbL2fO3CQcHee6F+b+dpVve4",
-    "g1JW3bIVjsu9rz7XYKZw",
-    "PGobF3d9dE6jaGJP+yCEu4/aR8akFFy9/A==",
-    "Kn0wuuDGvJvHmuyxQQ/1x+HAO8UkcZjngA==",
-    "kDS9c7zX14f2YOa7LSctZcc=",
-    "Ux1gmtqcnDGFbj2m5uEdY0B7B+72GGdzdIhJn6oBaA==",
-    "LIpO1gr+zHwWm1oZ9k3NHFbX7YYLoA==",
-    "Hw15mlUuGWs52FMgbi2Yvmg5Ozu8QAm27/++feV2Nt6X9AA=",
-    "Hw3FHmesQ7pDTLDtujGKhNkGkXmsdhDMyRnh5cA=",
-    "PGsBef76/gAFdX35X7zII3VJOs4uYA==",
-    "Hw15muXlxnv/mwEfKIGTLPmq1XxK/8zA",
-    "PK38njqKyEf191+aZvDR72/lnF/8dzoBkn6w",
-    "Aqu5uYBJFv8cH6q7TUjQb/8RscA=",
-    "tbvq0pKw8Tzx/STLSbF/O4rP0loMSBOOaA==",
-    "k+fZcHe+tUTJaqve4V5x/9ap3TPtZ8+tgdUuwA==",
-    "yLDopokZvj0PPspQvBnxtK6xgB+8AA==",
-    "3cIv1EaJIPehs793eyvZ5VQ8Zk3LI/z/bQtjLOzg7X38sag=",
-    "K/7LAczy54Y4TVa+ROYn6Te8FIUzvFVZQ80G84nF3TV/0rGqxuSgf2qwdHA=",
-    "g15tDk7MXCB+RJJpSKXTU5mQT0rd7YA=",
-    "mE7/kser33E8CE1uut9fzQ/YuIeYrV5rMEMzQFv4bztZNgA=",
-    "ngW6+L9e7v9CaENOjMwrsImE/A==",
-    "qC/W53U/M5PmXjfyr08sfeYA",
-    "k+K/u9Xh5jwkDGkzLdbe+5+1SbPF3/4vZld0Ijj8zZE4F/53rml7GgA=",
-    "CXyx/+8NAXes0vnfG37yxKzsZOOcGP8F4Pg=",
-    "mSl6sd++fLz19Kjl78v5vnFugwA=",
-    "Aqu6BVSbVSeQl77Iw/9A",
-    "AncJDmtxgp+9rG1IYJki3A==",
-    "Gb5fqN92K1wXqTIAHat075BvSXYarXeHUwYg",
-    "HwRZVB+8EdSBwxO/gzJtnefuJvzikOAkk+JY6wGuu/Zu/od+w8/219zQAA==",
-    "g03g3QQ/JqZVa0zBYvmN6pCPo4piXKbAZFJ5z+5+qiA=",
-    "BTers9z+p1zbk+G99SNLW0A=",
-    "k+Te7N29ZINd882eyt4Z2flvRzHg3AbA",
-    "yNKyHpcbseyQ9JfUnydJ2nmfh1iScNlQLWudN++/rRBXFoCqZnNZmIlSFheA",
-    "ylZ7XEFp1gDUqZO4fsQ0DPFR8xWqmf/i6mveCeIu9/bz0A==",
-    "7P9qO6ilfsxp1Y9nwnl4ANJG6VfJ8tD1/nKGAKG64EL7t9EIIXXqlKA=",
-    "Albpi7O7qd0nDJ2QVpxky7SfzOwR+vIuDGbH2F3+qA==",
-    "k+GyV5v1e84dMcCE22afckIDmA==",
-    "AjRJW+QgSMR9fZwwbXHpXXA=",
-    "lJ/o9i7j3b+eVTb/jdx/YA==",
-    "MBXVjuQzk9ZbSKw/IzSfmL9/8WX+4bn+",
-    "Hw15XVdxZr3eLz6xem8XLy8NLfv1/u0n/U0ifPQ="
   )

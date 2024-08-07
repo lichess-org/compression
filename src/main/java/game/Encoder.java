@@ -1,14 +1,8 @@
 package org.lichess.compression.game;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
-import java.nio.ByteBuffer;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 import org.lichess.compression.BitReader;
 import org.lichess.compression.BitWriter;
@@ -21,81 +15,70 @@ public class Encoder {
         }
     };
 
-    private static Pattern SAN_PATTERN = Pattern.compile(
-        "([NBKRQ])?([a-h])?([1-8])?x?([a-h][1-8])(?:=([NBRQK]))?[\\+#]?");
+    private final OpeningTrie openingTrie = OpeningTrie.mostCommonOpenings();
 
-    private static Role charToRole(char c) {
-        switch (c) {
-            case 'N': return Role.KNIGHT;
-            case 'B': return Role.BISHOP;
-            case 'R': return Role.ROOK;
-            case 'Q': return Role.QUEEN;
-            case 'K': return Role.KING;
-            default: throw new IllegalArgumentException();
-        }
-    }
-
-    public static byte[] encode(String pgnMoves[]) {
+    public byte[] encode(String pgnMoves[]) {
         BitWriter writer = new BitWriter();
+
+        Optional<String> longestCommonOpening = openingTrie.findLongestCommonOpening(pgnMoves);
+        longestCommonOpening.ifPresentOrElse(
+                opening -> {
+                    writer.writeBits(1, 1);
+                    writer.writeBits(openingTrie.get(opening), openingTrie.getBitVectorLength());
+                },
+                () -> writer.writeBits(0, 1));
+
+        long numPliesLongestCommonOpening = longestCommonOpening
+                .map(opening -> opening
+                        .chars()
+                        .filter(c -> c == ' ')
+                        .count())
+                .orElse(0L);
 
         Board board = new Board();
         MoveList legals = moveList.get();
 
-        for (String pgnMove: pgnMoves) {
+        for (int ply = 0; ply < pgnMoves.length; ply++) {
+            String pgnMove = pgnMoves[ply];
             // Parse SAN.
-            Role role = null, promotion = null;
-            long from = Bitboard.ALL;
-            int to;
-
-            if (pgnMove.startsWith("O-O-O")) {
-                role = Role.KING;
-                from = board.kings;
-                to = Bitboard.lsb(board.rooks & Bitboard.RANKS[board.turn ? 0 : 7]);
-            } else if (pgnMove.startsWith("O-O")) {
-                role = Role.KING;
-                from = board.kings;
-                to = Bitboard.msb(board.rooks & Bitboard.RANKS[board.turn ?  0 : 7]);
-            } else {
-                Matcher matcher = SAN_PATTERN.matcher(pgnMove);
-                if (!matcher.matches()) return null;
-
-                String roleStr = matcher.group(1);
-                role = roleStr == null ? Role.PAWN : charToRole(roleStr.charAt(0));
-
-                if (matcher.group(2) != null) from &= Bitboard.FILES[matcher.group(2).charAt(0) - 'a'];
-                if (matcher.group(3) != null) from &= Bitboard.RANKS[matcher.group(3).charAt(0) - '1'];
-
-                to = Square.square(matcher.group(4).charAt(0) - 'a', matcher.group(4).charAt(1) - '1');
-
-                if (matcher.group(5) != null) {
-                    promotion = charToRole(matcher.group(5).charAt(0));
-                }
-            }
+            SAN sanMove = SANParser.parse(pgnMove, board);
+            if (sanMove == null) return null;
 
             // Find index in legal moves.
             board.legalMoves(legals);
             legals.sort();
-
-            boolean foundMatch = false;
-            int size = legals.size();
-
-            for (int i = 0; i < size; i++) {
+            
+            OptionalInt correctIndex = findSanInLegalMoves(sanMove, legals);
+            if (correctIndex.isPresent()) {
+                int i = correctIndex.getAsInt();
                 Move legal = legals.get(i);
-                if (legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(from, legal.from)) {
-                    if (!foundMatch) {
-                        // Encode and play.
-                        Huffman.write(i, writer);
-                        board.play(legal);
-                        foundMatch = true;
-                    }
-                    else return null;
-                }
+                if (ply >= numPliesLongestCommonOpening) Huffman.write(i, writer);
+                board.play(legal);
             }
-
-            if (!foundMatch) return null;
+            else {
+                return null;
+            }
         }
 
         return writer.toArray();
+    }
+    
+    private OptionalInt findSanInLegalMoves(SAN sanMove, MoveList legals) {
+        boolean foundMatch = false;
+        int size = legals.size();
+        OptionalInt correctIndex = OptionalInt.empty();
+        for (int i = 0; i < size; i++) {
+            Move legal = legals.get(i);
+            if (legal.role == sanMove.role() && legal.to == sanMove.to() && legal.promotion == sanMove.promotion() && Bitboard.contains(sanMove.from(), legal.from)) {
+                if (!foundMatch) {
+                    // Encode and play.
+                    foundMatch = true;
+                    correctIndex = OptionalInt.of(i);
+                }
+                else return OptionalInt.empty();
+            }
+        }
+        return correctIndex;
     }
 
     public static class DecodeResult {
@@ -114,10 +97,29 @@ public class Encoder {
         }
     }
 
-    public static DecodeResult decode(byte input[], int plies) {
+    public DecodeResult decode(byte input[], int plies) {
         BitReader reader = new BitReader(input);
 
         String output[] = new String[plies];
+        
+        long numPliesDecodedOpening = 0L;
+
+        if (reader.readBits(1) == 1) {
+            int code = reader.readBits(openingTrie.getBitVectorLength());
+            Optional<String> decodedOpening = openingTrie.getFirstOpeningMappingToCode(code);
+            decodedOpening.ifPresent(opening -> {
+               String moves[] = opening.split(" ");
+               for (int i = 0; i < Math.min(plies, moves.length); i++) {
+                   output[i] = moves[i];
+               }
+            });
+            numPliesDecodedOpening = decodedOpening
+                    .map(opening -> opening
+                            .chars()
+                            .filter(c -> c == ' ')
+                            .count())
+                    .orElse(0L);
+        }
 
         Board board = new Board();
         MoveList legals = moveList.get();
@@ -142,8 +144,16 @@ public class Encoder {
             // Decode and play next move.
             if (i < plies) {
                 legals.sort();
-                Move move = legals.get(Huffman.read(reader));
-                output[i] = san(move, legals);
+                Move move;
+                if (i >= numPliesDecodedOpening) {
+                    move = legals.get(Huffman.read(reader));
+                    output[i] = move.san(legals);
+                }
+                else {
+                    SAN sanMove = SANParser.parse(output[i], board);
+                    int correctIndex = findSanInLegalMoves(sanMove, legals).getAsInt();
+                    move = legals.get(correctIndex);
+                }
                 board.play(move);
 
                 if (move.isZeroing()) lastZeroingPly = i;
@@ -160,59 +170,6 @@ public class Encoder {
             plies - 1 - lastZeroingPly,
             Arrays.copyOf(positionHashes, 3 * (plies - lastIrreversiblePly)),
             lastUci);
-    }
-
-    private static String san(Move move, MoveList legals) {
-        switch (move.type) {
-            case Move.NORMAL:
-            case Move.EN_PASSANT:
-                StringBuilder builder = new StringBuilder(6);
-                builder.append(move.role.symbol);
-
-                // From.
-                if (move.role != Role.PAWN) {
-                    boolean file = false, rank = false;
-                    long others = 0;
-
-                    for (int i = 0; i < legals.size(); i++) {
-                        Move other = legals.get(i);
-                        if (other.role == move.role && other.to == move.to && other.from != move.from) {
-                            others |= 1L << other.from;
-                        }
-                    }
-
-                    if (others != 0) {
-                        if ((others & Bitboard.RANKS[Square.rank(move.from)]) != 0) file = true;
-                        if ((others & Bitboard.FILES[Square.file(move.from)]) != 0) rank = true;
-                        else file = true;
-                    }
-
-                    if (file) builder.append((char) (Square.file(move.from) + 'a'));
-                    if (rank) builder.append((char) (Square.rank(move.from) + '1'));
-                } else if (move.capture) {
-                    builder.append((char) (Square.file(move.from) + 'a'));
-                }
-
-                // Capture.
-                if (move.capture) builder.append('x');
-
-                // To.
-                builder.append((char) (Square.file(move.to) + 'a'));
-                builder.append((char) (Square.rank(move.to) + '1'));
-
-                // Promotion.
-                if (move.promotion != null) {
-                    builder.append('=');
-                    builder.append(move.promotion.symbol);
-                }
-
-                return builder.toString();
-
-            case Move.CASTLING:
-                return move.from < move.to ? "O-O" : "O-O-O";
-        }
-
-        return "--";
     }
 
     private static void setHash(byte buffer[], int ply, int hash) {
