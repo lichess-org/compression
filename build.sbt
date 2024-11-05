@@ -1,5 +1,5 @@
 lazy val compression = Project("compression", file("."))
-scalaVersion := "3.4.2"
+scalaVersion := "3.5.2"
 name         := "compression"
 organization := "org.lichess"
 version      := "2.0"
