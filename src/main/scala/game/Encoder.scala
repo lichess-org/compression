@@ -1,6 +1,5 @@
 package org.lichess.compression.game
 
-import java.util.regex.{ Matcher, Pattern }
 import org.lichess.compression.BitOps
 
 object Encoder:

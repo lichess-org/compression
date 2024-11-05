@@ -1,7 +1,5 @@
 package org.lichess.compression.game
 
-import scala.collection.mutable.ArrayBuffer
-
 final class MoveList(capacity: Int = 256):
   private val buffer     = Array.tabulate(capacity)(_ => Move())
   private val comparator = java.util.Comparator.comparingInt[Move](_.score).reversed()
