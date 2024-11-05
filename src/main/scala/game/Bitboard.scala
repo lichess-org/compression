@@ -27,7 +27,6 @@ object Bitboard:
   private val ATTACKS: Array[Long] = Array.ofDim(88772)
 
   def slidingAttacks(square: Int, occupied: Long, deltas: Array[Int]): Long =
-    @tailrec
     def attackLoop(deltaIndex: Int, acc: Long): Long =
       if deltaIndex >= deltas.length then acc
       else
