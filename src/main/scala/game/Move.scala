@@ -1,6 +1,6 @@
 package org.lichess.compression.game
 
-final case class Move(
+final class Move(
     var `type`: Int = 0,
     var role: Role = null,
     var from: Int = 0,
