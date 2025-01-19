@@ -1,15 +1,17 @@
 package org.lichess.compression
 
 object BitOps:
+  private val BitMasks: Array[Int] =
+    Array.tabulate(32)(i => (1 << i) - 1)
 
-  def writeSigned(values: Array[Int], writer: BitOps.Writer): Unit =
+  def writeSigned(values: Array[Int], writer: Writer): Unit =
     values.foreach(n => writeSigned(n, writer))
 
-  def writeSigned(n: Int, writer: BitOps.Writer): Unit =
+  def writeSigned(n: Int, writer: Writer): Unit =
     // zigzag encode
     writeUnsigned((n << 1) ^ (n >> 31), writer)
 
-  def writeUnsigned(n: Int, writer: BitOps.Writer): Unit =
+  def writeUnsigned(n: Int, writer: Writer): Unit =
     if (n & ~0x1f) == 0 then writer.writeBits(n, 6)
     else
       writer.writeBits(n | 0x20, 6)
@@ -20,7 +22,7 @@ object BitOps:
       // While loop terminated, so 4th bit is 0
       writer.writeBits(remaining, 4)
 
-  def readUnsigned(reader: BitOps.Reader): Int =
+  def readUnsigned(reader: Reader): Int =
     var n = reader.readBits(6)
     if n > 0x1f then
       n &= 0x1f
@@ -35,19 +37,20 @@ object BitOps:
       n |= curVal << curShift
     n
 
-  def readSigned(reader: BitOps.Reader): Int =
+  def readSigned(reader: Reader): Int =
     val n = readUnsigned(reader)
     (n >>> 1) ^ -(n & 1) // zigzag decode
 
-  def readSigned(reader: BitOps.Reader, numMoves: Int): Array[Int] =
+  def readSigned(reader: Reader, numMoves: Int): Array[Int] =
     Array.tabulate(numMoves) { _ =>
       val n = readUnsigned(reader)
       (n >>> 1) ^ -(n & 1) // zigzag decode
     }
 
+  import java.nio.ByteBuffer
+
   class Reader(bytes: Array[Byte]):
-    private val BitMasks         = BitOps.getBitMasks
-    private val bb               = java.nio.ByteBuffer.wrap(bytes)
+    private val bb               = ByteBuffer.wrap(bytes)
     private var numRemainingBits = 0
     private var pendingBits      = 0
 
@@ -73,9 +76,9 @@ object BitOps:
         readNext()
         (res << neededBits) | readBits(neededBits)
 
-  class Writer:
-    private val BitMasks         = BitOps.getBitMasks
-    private val buffer           = collection.mutable.ArrayBuffer[Int]()
+  class Writer(initialCapacity: Int = 10):
+    private var buffer           = Array[Int](initialCapacity)
+    private var index: Int       = 0
     private var numRemainingBits = 32
     private var pendingBits      = 0
 
@@ -84,19 +87,18 @@ object BitOps:
       numRemainingBits -= numBits
       if numRemainingBits >= 0 then pendingBits |= maskedData << numRemainingBits
       else
-        buffer.append(pendingBits | (maskedData >>> -numRemainingBits))
+        if index == buffer.length then buffer = java.util.Arrays.copyOf(buffer, index + (index >> 1) + 5)
+        buffer(index) = pendingBits | (maskedData >>> -numRemainingBits);
         numRemainingBits += 32
         pendingBits = maskedData << numRemainingBits
+        index += 1
 
     def toArray(): Array[Byte] =
       val numPendingBytes = (39 - numRemainingBits) >> 3
-      val bb              = java.nio.ByteBuffer.allocate(4 * buffer.size + numPendingBytes)
-      buffer.foreach(bb.putInt)
+      val bb              = ByteBuffer.allocate(4 * index + numPendingBytes)
+      for i <- 0 until index do bb.putInt(buffer(i))
       if numPendingBytes == 4 then bb.putInt(pendingBits)
       else for i <- 0 until numPendingBytes do bb.put((pendingBits >>> (24 - i * 8)).toByte)
       bb.array()
-
-  private def getBitMasks: Array[Int] =
-    Array.tabulate(32)(i => (1 << i) - 1)
 
 end BitOps

@@ -1,9 +1,9 @@
 lazy val compression = Project("compression", file("."))
-scalaVersion := "3.5.2"
+scalaVersion := "3.6.2"
 name         := "compression"
 organization := "org.lichess"
 version      := "2.0"
-resolvers += "lila-maven" at "https://raw.githubusercontent.com/ornicar/lila-maven/master"
+resolvers += "lila-maven".at("https://raw.githubusercontent.com/ornicar/lila-maven/master")
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.17.0" % Test
 scalacOptions := Seq(
   "-encoding",

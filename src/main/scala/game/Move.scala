@@ -38,7 +38,7 @@ final class Move(
   def uci(): String =
     val toSquare =
       if `type` == Move.CASTLING then Square.combine(if to < from then Square.C1 else Square.G1, from) else to
-    val builder = new StringBuilder(if this.promotion == null then 4 else 5)
+    val builder = StringBuilder(if this.promotion == null then 4 else 5)
     builder.append((Square.file(from) + 'a').toChar)
     builder.append((Square.rank(from) + '1').toChar)
     builder.append((Square.file(toSquare) + 'a').toChar)

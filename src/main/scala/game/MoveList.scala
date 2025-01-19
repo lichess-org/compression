@@ -51,7 +51,7 @@ final class MoveList(capacity: Int = 256):
     buffer(size) = tmp
 
   def pretty(): String =
-    val builder = new StringBuilder()
+    val builder = StringBuilder()
     for i <- 0 until size do
       val m = buffer(i)
       builder.append(s"${m.uci()} ")

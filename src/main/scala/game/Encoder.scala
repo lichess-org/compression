@@ -5,7 +5,7 @@ import org.lichess.compression.BitOps
 object Encoder:
 
   private val moveList = new ThreadLocal[MoveList]:
-    override def initialValue(): MoveList = new MoveList()
+    override def initialValue(): MoveList = MoveList()
 
   private val SAN_RE =
     "([NBKRQ])?([a-h])?([1-8])?x?([a-h][1-8])(?:=([NBRQK]))?[\\+#]?".r
@@ -16,11 +16,11 @@ object Encoder:
     case 'R' => Role.ROOK
     case 'Q' => Role.QUEEN
     case 'K' => Role.KING
-    case _   => throw new IllegalArgumentException()
+    case _   => throw IllegalArgumentException()
 
   def encode(pgnMoves: Array[String]): Array[Byte] =
-    val writer = new BitOps.Writer()
-    val board  = new Board()
+    val writer = BitOps.Writer()
+    val board  = Board()
     val legals = moveList.get()
 
     for pgnMove <- pgnMoves do
@@ -119,7 +119,7 @@ object Encoder:
 
   private def san(move: Move, legals: MoveList): String = move.`type` match
     case Move.NORMAL | Move.EN_PASSANT =>
-      val builder = new StringBuilder(6)
+      val builder = StringBuilder(6)
       builder.append(move.role.symbol)
 
       if move.role != Role.PAWN then
