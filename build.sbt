@@ -1,9 +1,9 @@
 lazy val compression = Project("compression", file("."))
-scalaVersion := "3.3.0"
+scalaVersion := "3.6.2"
 name         := "compression"
 organization := "org.lichess"
-version      := "1.10"
-resolvers += "lila-maven" at "https://raw.githubusercontent.com/ornicar/lila-maven/master"
+version      := "2.0"
+resolvers += "lila-maven".at("https://raw.githubusercontent.com/ornicar/lila-maven/master")
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.17.0" % Test
 scalacOptions := Seq(
   "-encoding",
@@ -14,7 +14,6 @@ scalacOptions := Seq(
   "-indent",
   "-rewrite",
   "-source:future-migration",
-  "-release:17",
+  "-release:21"
 )
-javacOptions ++= Seq("--release", "17")
 publishTo := Some(Resolver.file("file", new File(sys.props.getOrElse("publishTo", ""))))
