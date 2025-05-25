@@ -12,7 +12,7 @@ import org.lichess.compression.game.Encoder
 @Measurement(iterations = 15, timeUnit = TimeUnit.SECONDS, time = 3)
 @Warmup(iterations = 15, timeUnit = TimeUnit.SECONDS, time = 3)
 @Fork(value = 3)
-class GameEncoderBenchmark:
+class HuffmanPgnBench:
 
   @Benchmark
   def encode(blackhole: Blackhole) = fixtures foreach { pgnMoves =>
