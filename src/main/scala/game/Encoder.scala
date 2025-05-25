@@ -96,8 +96,9 @@ object Encoder:
       if 0 < i then if board.isCheck() then output(i - 1) += (if legals.isEmpty then "#" else "+")
 
       if i < plies then
-        legals.sort()
-        val move = legals.get(Huffman.read(reader))
+        val moveIndex = Huffman.read(reader)
+        legals.partialSort(moveIndex + 1)
+        val move = legals.get(moveIndex)
         output(i) = san(move, legals)
         board.play(move)
 
