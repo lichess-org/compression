@@ -21,7 +21,7 @@ class GameEncoderBenchmark:
 
   @Benchmark
   def decode(blackhole: Blackhole) = encodedFixtures foreach { case (encoded, plies) =>
-    blackhole.consume(Encoder.decode(encoded, size))
+    blackhole.consume(Encoder.decode(encoded, plies))
   }
 
   val fixtures = List(
