@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 class GameEncoderBenchmark:
 
   @Benchmark
-  def encodeAndDecode(blackhole: Blackhole) = fixtures foreach { pgnMoves =>
+  def encodeDecode(blackhole: Blackhole) = fixtures foreach { pgnMoves =>
     blackhole.consume(Encoder.decode(Encoder.encode(pgnMoves), pgnMoves.size))
   }
 
