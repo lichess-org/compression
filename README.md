@@ -11,6 +11,12 @@ This is not how Scala code should be written, it is not idiomatic.
 - [A better game clock history](https://lichess.org/blog/WOEVrjAAALNI-fWS/a-better-game-clock-history)
 - [Developer update: 275% improved game compression](https://lichess.org/blog/Wqa7GiAAAOIpBLoY/developer-update-275-improved-game-compression)
 
+## Benchmarks
+
+```bash
+sbt 'benchmarks/jmh:run -i 5 -wi 3 -f1 -t1 org.lichess.compression.benchmark.*'
+```
+
 ## License
 
 This library is licensed under the GNU Affero General Public License 3 or
