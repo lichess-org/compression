@@ -1,5 +1,7 @@
 # Chess clock and move compression algorithms for lichess.org
 
+[![](https://jitpack.io/v/lichess-org/compression.svg)](https://jitpack.io/#lichess-org/compression)
+
 ## Disclaimer
 
 This library was migrated from the Java language to the Scala language.
