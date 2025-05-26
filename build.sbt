@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
     scalaVersion := "3.7.0",
     name         := "compression",
     organization := "org.lichess",
-    version      := "3.1",
+    version      := "3.1.1",
     resolvers += "lila-maven".at("https://raw.githubusercontent.com/ornicar/lila-maven/master"),
     libraryDependencies += "org.specs2" %% "specs2-core" % "4.17.0" % Test
   )
