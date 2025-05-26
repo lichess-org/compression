@@ -46,9 +46,48 @@ final class MoveList(capacity: Int = 256):
   private def swapRemove(i: Int): Unit =
     require(i < size)
     size -= 1
+    swap(i, size)
+
+  private def swap(i: Int, j: Int): Unit =
     val tmp = buffer(i)
-    buffer(i) = buffer(size)
-    buffer(size) = tmp
+    buffer(i) = buffer(j)
+    buffer(j) = tmp
+
+  def partialSort(last: Int): Unit =
+    require(last <= size)
+    makeHeap(last)
+    for i <- last until size do
+      if comparator.compare(buffer(i), buffer(0)) < 0 then
+        swap(0, i)
+        adjustHeap(0, last)
+    sortHeap(last)
+
+  private def makeHeap(last: Int): Unit =
+    if last >= 2 then
+      for parent <- (last - 2) / 2 until -1 by -1 do
+        adjustHeap(parent, last)
+
+  private def adjustHeap(holeIndex: Int, len: Int): Unit =
+    require(len <= size)
+    require(holeIndex < size)
+    var leftChild = holeIndex * 2 + 1
+    var holeDest = holeIndex
+    val tmp = buffer(holeDest)
+    while leftChild < len do
+      if leftChild + 1 < len then
+        leftChild = leftChild + (if comparator.compare(buffer(leftChild), buffer(leftChild + 1)) < 0 then 1 else 0)
+      if comparator.compare(tmp, buffer(leftChild)) < 0 then
+        buffer(holeDest) = buffer(leftChild)
+        holeDest = leftChild
+        leftChild = leftChild * 2 + 1
+      else
+        leftChild = len
+    buffer(holeDest) = tmp
+
+  private def sortHeap(last: Int): Unit =
+    for i <- last - 1 until 0 by -1 do
+      swap(0, i)
+      adjustHeap(0, i)
 
   def pretty(): String =
     val builder = StringBuilder()
