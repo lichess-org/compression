@@ -63,9 +63,8 @@ final class MoveList(capacity: Int = 256):
     sortHeap(last)
 
   private def makeHeap(last: Int): Unit =
-    if last >= 2 then
-      for parent <- (last - 2) / 2 until -1 by -1 do
-        adjustHeap(parent, last)
+    for parent <- last / 2 until 0 by -1 do
+      adjustHeap(parent - 1, last)
 
   private def adjustHeap(holeIndex: Int, len: Int): Unit =
     require(len <= size)
