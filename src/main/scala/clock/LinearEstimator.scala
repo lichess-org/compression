@@ -2,11 +2,11 @@ package org.lichess.compression.clock
 
 object LinearEstimator:
 
-  def encode(dest: Array[Int], startTime: Int): Unit =
+  @inline def encode(dest: Array[Int], startTime: Int): Unit =
     val maxIdx = dest.length - 1
     encode(dest, -1, startTime, maxIdx, dest(maxIdx))
 
-  def decode(dest: Array[Int], startTime: Int): Unit =
+  @inline def decode(dest: Array[Int], startTime: Int): Unit =
     val maxIdx = dest.length - 1
     decode(dest, -1, startTime, maxIdx, dest(maxIdx))
 

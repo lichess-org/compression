@@ -6,7 +6,7 @@ import org.lichess.compression.BitOps
 object Encoder:
 
   def encode(centis: Array[Int], startTime: Int): Array[Byte] =
-    if centis.isEmpty then return Array.emptyByteArray
+    if centis.length == 0 then return new Array(0)
 
     val encoded        = Arrays.copyOf(centis, centis.length)
     val truncatedStart = LowBitTruncator.truncate(startTime)
@@ -23,7 +23,7 @@ object Encoder:
     writer.toArray()
 
   def decode(bytes: Array[Byte], startTime: Int): Array[Int] =
-    if bytes.isEmpty then return Array.emptyIntArray
+    if bytes.length == 0 then return new Array(0)
 
     val reader         = BitOps.Reader(bytes)
     val truncatedStart = LowBitTruncator.truncate(startTime)
