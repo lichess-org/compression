@@ -8,11 +8,7 @@ object BitOps:
     Array.tabulate(32)(i => (1 << i) - 1)
 
   def writeSigned(values: Array[Int], writer: Writer): Unit =
-    val len = values.length
-    var i   = 0
-    while i < len do
-      writeSigned(values(i), writer)
-      i += 1
+    values.foreach(writeSigned(_, writer))
 
   def writeSigned(n: Int, writer: Writer): Unit =
     // zigzag encode
