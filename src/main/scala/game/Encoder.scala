@@ -32,18 +32,18 @@ object Encoder:
       if pgnMove.startsWith("O-O-O") then
         role = Role.KING
         from = board.kings
-        to = Bitboard.lsb(board.rooks & Bitboard.RANKS(if (board.turn) 0 else 7))
+        to = Bitboard.lsb(board.rooks & Bitboard.RANKS(if board.turn then 0 else 7))
       else if pgnMove.startsWith("O-O") then
         role = Role.KING
         from = board.kings
-        to = Bitboard.msb(board.rooks & Bitboard.RANKS(if (board.turn) 0 else 7))
+        to = Bitboard.msb(board.rooks & Bitboard.RANKS(if board.turn then 0 else 7))
       else
         SAN_RE.findFirstMatchIn(pgnMove) match
           case None =>
             return null
           case Some(matcher) =>
             val roleStr = matcher.group(1)
-            role = if (roleStr == null) Role.PAWN else charToRole(roleStr.charAt(0))
+            role = if roleStr == null then Role.PAWN else charToRole(roleStr.charAt(0))
             if matcher.group(2) != null then from &= Bitboard.FILES(matcher.group(2).charAt(0) - 'a')
             if matcher.group(3) != null then from &= Bitboard.RANKS(matcher.group(3).charAt(0) - '1')
 

@@ -37,7 +37,7 @@ object Bitboard:
             attackLoop(deltaIndex + 1, tempAcc)
           else
             val newAcc = tempAcc | (1L << newSq)
-            if (Bitboard.contains(occupied, newSq)) attackLoop(deltaIndex + 1, newAcc)
+            if Bitboard.contains(occupied, newSq) then attackLoop(deltaIndex + 1, newAcc)
             else deltaLoop(newSq, newAcc)
         deltaLoop(square, acc)
     attackLoop(0, 0L)
@@ -50,7 +50,7 @@ object Bitboard:
       assert(ATTACKS(idx) == 0 || ATTACKS(idx) == attack)
       ATTACKS(idx) = attack
       val nextSubset = (subset - magic.mask) & magic.mask
-      if (nextSubset != 0) updateAttacks(nextSubset)
+      if nextSubset != 0 then updateAttacks(nextSubset)
 
     updateAttacks(0L)
 

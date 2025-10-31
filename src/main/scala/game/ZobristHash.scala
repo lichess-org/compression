@@ -7,30 +7,30 @@ object ZobristHash:
   def hashPieces(board: Board): Int =
     var hash     = 0
     var occupied = board.occupied
-    while (occupied != 0)
+    while occupied != 0 do
       val sq = Bitboard.lsb(occupied)
       hash ^= hashPiece(sq, board.whiteAt(sq), board.roleAt(sq))
       occupied &= occupied - 1L
     hash
 
   def hashPiece(square: Int, color: Boolean, role: Role): Int =
-    val index = role.index * 2 + (if (color) 1 else 0)
+    val index = role.index * 2 + (if color then 1 else 0)
     POLYGLOT(64 * index + square)
 
   def hashCastling(board: Board): Int =
     var hash = 0
     val cr   = board.castlingRights
-    if (Bitboard.contains(cr, Square.H1)) hash ^= POLYGLOT(768)
-    if (Bitboard.contains(cr, Square.A1)) hash ^= POLYGLOT(768 + 1)
-    if (Bitboard.contains(cr, Square.H8)) hash ^= POLYGLOT(768 + 2)
-    if (Bitboard.contains(cr, Square.A8)) hash ^= POLYGLOT(768 + 3)
+    if Bitboard.contains(cr, Square.H1) then hash ^= POLYGLOT(768)
+    if Bitboard.contains(cr, Square.A1) then hash ^= POLYGLOT(768 + 1)
+    if Bitboard.contains(cr, Square.H8) then hash ^= POLYGLOT(768 + 2)
+    if Bitboard.contains(cr, Square.A8) then hash ^= POLYGLOT(768 + 3)
     hash
 
   def hashTurn(board: Board): Int =
-    if (board.turn) POLYGLOT(780) else 0
+    if board.turn then POLYGLOT(780) else 0
 
   def hashEnPassant(board: Board): Int =
-    if (board.hasLegalEnPassant()) POLYGLOT(772 + Square.file(board.epSquare)) else 0
+    if board.hasLegalEnPassant() then POLYGLOT(772 + Square.file(board.epSquare)) else 0
 
   val POLYGLOT: Array[Int] = Array(
     0x9d3924, 0x2af739, 0x44db01, 0x9c15f7, 0x758344, 0x3290ac, 0x0fbbad, 0xe83a90, 0x0d7e76, 0x1a0838,
