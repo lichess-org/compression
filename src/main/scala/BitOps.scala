@@ -4,8 +4,7 @@ import java.util.Arrays
 import java.nio.ByteBuffer
 
 object BitOps:
-  private val BitMasks: Array[Int] =
-    Array.tabulate(32)(i => (1 << i) - 1)
+  private val BitMasks: Array[Int] = Array.tabulate(32)(i => (1 << i) - 1)
 
   def writeSigned(values: Array[Int], writer: Writer): Unit =
     values.foreach(writeSigned(_, writer))

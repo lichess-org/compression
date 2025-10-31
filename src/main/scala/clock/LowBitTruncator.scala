@@ -12,7 +12,7 @@ object LowBitTruncator:
       centis(i) >>= 3
       i += 1
 
-  @inline def truncate(centi: Int): Int = centi >> 3
+  def truncate(centi: Int): Int = centi >> 3
 
   def writeDigits(centis: Array[Int], writer: BitOps.Writer): Unit =
     val maxIdx = centis.length - 1
