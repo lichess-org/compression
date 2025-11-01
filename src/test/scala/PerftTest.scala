@@ -20,7 +20,7 @@ object PerftTest:
     else 1
 
   private def assertEqual(lhs: Long, rhs: Long): Unit =
-    if (lhs != rhs) throw RuntimeException("perft test failed")
+    if lhs != rhs then throw RuntimeException("perft test failed")
 
   // Particularly tricky test positions from:
   // https://chessprogramming.wikispaces.com/Perft+Results
