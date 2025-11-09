@@ -1,10 +1,8 @@
 package org.lichess.compression.game
 
 final class MoveList(capacity: Int = 256):
-  private val buffer     = Array.tabulate(capacity)(_ => Move())
-  private val comparator = java.util.Comparator.comparingInt[Move](_.score).reversed()
-
-  private var size = 0
+  private val buffer = Array.tabulate(capacity)(_ => Move())
+  private var size   = 0
 
   def clear(): Unit = size = 0
 
@@ -32,8 +30,8 @@ final class MoveList(capacity: Int = 256):
     buffer(size).set(board, Move.EN_PASSANT, Role.PAWN, capturer, true, to, null)
     size += 1
 
-  def sort(): Unit =
-    java.util.Arrays.sort[Move](buffer, 0, size, comparator)
+  // Cast is needed because scala arrays are not covariant.
+  def sort(): Unit = java.util.Arrays.sort(buffer.asInstanceOf[Array[Object]], 0, size)
 
   def anyMatch(predicate: Move => Boolean): Boolean = buffer.take(size).exists(predicate)
 
@@ -57,7 +55,7 @@ final class MoveList(capacity: Int = 256):
     require(last <= size)
     makeHeap(last)
     for i <- last until size do
-      if comparator.compare(buffer(i), buffer(0)) < 0 then
+      if buffer(i) < buffer(0) then
         swap(0, i)
         adjustHeap(0, last)
     sortHeap(last)
@@ -72,10 +70,8 @@ final class MoveList(capacity: Int = 256):
     var holeDest  = holeIndex
     val tmp       = buffer(holeDest)
     while leftChild < len do
-      if leftChild + 1 < len then
-        leftChild =
-          leftChild + (if comparator.compare(buffer(leftChild), buffer(leftChild + 1)) < 0 then 1 else 0)
-      if comparator.compare(tmp, buffer(leftChild)) < 0 then
+      if leftChild + 1 < len && buffer(leftChild) < buffer(leftChild + 1) then leftChild += 1
+      if tmp < buffer(leftChild) then
         buffer(holeDest) = buffer(leftChild)
         holeDest = leftChild
         leftChild = leftChild * 2 + 1

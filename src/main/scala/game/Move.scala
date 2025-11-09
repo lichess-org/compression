@@ -8,7 +8,7 @@ final class Move(
     var to: Int = 0,
     var promotion: Role = null,
     var score: Int = 0
-):
+) extends Ordered[Move]:
 
   def set(
       board: Board,
@@ -34,6 +34,8 @@ final class Move(
       (512 + moveValue << 12) +
       (to << 6) +
       from
+
+  override def compare(that: Move): Int = Integer.compare(that.score, score)
 
   def uci(): String =
     val toSquare =
