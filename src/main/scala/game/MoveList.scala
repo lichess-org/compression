@@ -63,24 +63,23 @@ final class MoveList(capacity: Int = 256):
     sortHeap(last)
 
   private def makeHeap(last: Int): Unit =
-    for parent <- last / 2 until 0 by -1 do
-      adjustHeap(parent - 1, last)
+    for parent <- last / 2 until 0 by -1 do adjustHeap(parent - 1, last)
 
   private def adjustHeap(holeIndex: Int, len: Int): Unit =
     require(len <= size)
     require(holeIndex < size)
     var leftChild = holeIndex * 2 + 1
-    var holeDest = holeIndex
-    val tmp = buffer(holeDest)
+    var holeDest  = holeIndex
+    val tmp       = buffer(holeDest)
     while leftChild < len do
       if leftChild + 1 < len then
-        leftChild = leftChild + (if comparator.compare(buffer(leftChild), buffer(leftChild + 1)) < 0 then 1 else 0)
+        leftChild =
+          leftChild + (if comparator.compare(buffer(leftChild), buffer(leftChild + 1)) < 0 then 1 else 0)
       if comparator.compare(tmp, buffer(leftChild)) < 0 then
         buffer(holeDest) = buffer(leftChild)
         holeDest = leftChild
         leftChild = leftChild * 2 + 1
-      else
-        leftChild = len
+      else leftChild = len
     buffer(holeDest) = tmp
 
   private def sortHeap(last: Int): Unit =

@@ -15,12 +15,12 @@ import org.lichess.compression.game.Encoder
 class HuffmanPgnBench:
 
   @Benchmark
-  def encode(blackhole: Blackhole) = fixtures foreach { pgnMoves =>
+  def encode(blackhole: Blackhole) = fixtures.foreach { pgnMoves =>
     blackhole.consume(Encoder.encode(pgnMoves))
   }
 
   @Benchmark
-  def decode(blackhole: Blackhole) = encodedFixtures foreach { case (encoded, plies) =>
+  def decode(blackhole: Blackhole) = encodedFixtures.foreach { case (encoded, plies) =>
     blackhole.consume(Encoder.decode(encoded, plies))
   }
 
@@ -139,6 +139,6 @@ class HuffmanPgnBench:
     "d4 e6 c4 d5 Nf3 c6 Nc3 Bd6 e3 f5 Bd3 Nf6 Qc2 O-O O-O Bd7 c5 Bc7 b4 Be8 Ng5 Ne4 Nxe6 Qh4 Nxf8 Qxh2#",
     "e4 b6 d4 Bb7 Bd3 e6 c4 Bb4+ Nc3 Bxc3+ bxc3 h6 Nf3 Nf6 Qe2 O-O O-O d6 h3 Nbd7 a4 e5 Re1 a5 Nh2 Nh7 d5 Nc5 Bc2 Bc8 f4 Qh4 Rf1 Nf6 fxe5 dxe5 Nf3 Qg3 Kh1",
     "e4 d5 exd5 Qxd5 Nc3 Qd8 Bc4 Nf6 d3 Bg4 f3 Bf5 Be3 e6 Nge2 c6 Ng3 Bg6 Qd2 Bd6 Nce4 Nxe4 Nxe4 Bc7 Bb3 Ba5 c3 Bxe4 fxe4 O-O O-O-O b5 h4 Bb6 d4 Nd7 g4 c5 g5 cxd4 Bxd4 Bxd4 Qxd4 Nb8 Qe3 Qc7"
-  ).map(_ `split` " ")
+  ).map(_.`split`(" "))
 
   val encodedFixtures = fixtures.map(pgnMoves => (Encoder.encode(pgnMoves), pgnMoves.size))

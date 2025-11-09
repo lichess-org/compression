@@ -21,7 +21,7 @@ class HuffmanPgnTest extends Specification:
       }
 
     "stable format" in:
-      forall(v1 zip fixtures) { case (encoded, pgn) =>
+      forall(v1.zip(fixtures)) { case (encoded, pgn) =>
         val pgnMoves = pgn.split(" ")
         val decoded  = Encoder.decode(base64ToBytes(encoded), pgnMoves.size)
         pgnMoves must_== decoded.pgnMoves
