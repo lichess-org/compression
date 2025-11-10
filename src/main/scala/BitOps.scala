@@ -7,13 +7,7 @@ object BitOps:
   private val BitMasks: Array[Int] = Array.tabulate(32)(i => (1 << i) - 1)
 
   def writeSigned(values: Array[Int], writer: Writer): Unit =
-    // Ugly but 70ns faster than a foreach which adds closure
-    // and auto-boxing overhead.
-    val len = values.length
-    var i   = 0
-    while i < len do
-      writeSigned(values(i), writer)
-      i += 1
+    values.foreach(writeSigned(_, writer))
 
   def writeSigned(n: Int, writer: Writer): Unit =
     // zigzag encode
@@ -109,7 +103,7 @@ object BitOps:
         while i < numPendingBytes do
           bb.put((pendingBits >>> (24 - i * 8)).toByte)
           i += 1
-      bb.array()
+      bb.array
 
   private final class IntArrayList:
     private var data  = new Array[Int](10)
