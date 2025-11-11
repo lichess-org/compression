@@ -52,21 +52,12 @@ object Encoder:
             if matcher.group(5) != null then promotion = charToRole(matcher.group(5).charAt(0))
 
       board.legalMoves(legals)
-      legals.sort()
-      var foundMatch = false
-      for i <- 0 until legals.getSize() do
-        val legal = legals.get(i)
-        if legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(
-            from,
-            legal.from
-          )
-        then
-          if foundMatch then return null
-          Huffman.write(i, writer)
-          board.play(legal)
-          foundMatch = true
-
-      if !foundMatch then return null
+      legals.find(legal => legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(from, legal.from)) match
+        case None =>
+          return null
+        case Some(move) =>
+          Huffman.write(legals.rank(move), writer)
+          board.play(move)
 
     writer.toArray()
   end encode

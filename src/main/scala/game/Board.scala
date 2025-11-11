@@ -189,7 +189,7 @@ final class Board(
 
       val king     = getKing(this.turn)
       val blockers = sliderBlockers(king)
-      moves.anyMatch(m => isSafe(king, m, blockers))
+      moves.exists(m => isSafe(king, m, blockers))
 
   private def genNonKing(mask: Long, moves: MoveList): Unit =
     genPawn(mask, moves)
