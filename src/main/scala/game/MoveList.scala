@@ -1,8 +1,8 @@
 package org.lichess.compression.game
 
 final class MoveList(capacity: Int = 256):
-  private val buffer = Array.tabulate(capacity)(_ => Move())
-  private var size   = 0
+  private final val buffer = Array.tabulate(capacity)(_ => Move())
+  private var size         = 0
 
   def clear(): Unit = size = 0
 
