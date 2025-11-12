@@ -179,7 +179,7 @@ final class Board(
 
     val blockers = sliderBlockers(king)
 
-    if blockers != 0 || this.epSquare != 0 then moves.retain(m => isSafe(king, m, blockers))
+    if blockers != 0 || this.epSquare != 0 then moves.retain(isSafe(king, _, blockers))
 
   def hasLegalEnPassant(): Boolean =
     if this.epSquare == 0 then false
@@ -189,7 +189,7 @@ final class Board(
 
       val king     = getKing(this.turn)
       val blockers = sliderBlockers(king)
-      moves.anyMatch(m => isSafe(king, m, blockers))
+      moves.anyMatch(isSafe(king, _, blockers))
 
   private def genNonKing(mask: Long, moves: MoveList): Unit =
     genPawn(mask, moves)
