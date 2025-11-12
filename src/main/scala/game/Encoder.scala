@@ -52,7 +52,12 @@ object Encoder:
             if matcher.group(5) != null then promotion = charToRole(matcher.group(5).charAt(0))
 
       board.legalMoves(legals)
-      legals.find(legal => legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(from, legal.from)) match
+      legals.find(legal =>
+        legal.role == role && legal.to == to && legal.promotion == promotion && Bitboard.contains(
+          from,
+          legal.from
+        )
+      ) match
         case None =>
           return null
         case Some(move) =>

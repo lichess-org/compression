@@ -59,7 +59,7 @@ final class MoveList(capacity: Int = 256):
     require(rank < size)
     // Quickselect. Bounds are small enough that naive pivot selection is ok,
     // even on adversarial inputs.
-    var left = 0
+    var left  = 0
     var right = size - 1
     while left < right do
       val pivot = partition(left, right)
@@ -70,7 +70,7 @@ final class MoveList(capacity: Int = 256):
 
   private def partition(left: Int, right: Int): Int =
     val pivot = buffer(right)
-    var i = left - 1
+    var i     = left - 1
     for j <- left until right do
       if buffer(j) < pivot then
         i += 1
