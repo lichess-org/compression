@@ -37,7 +37,7 @@ final class MoveList(capacity: Int = 256):
     buffer.view.take(size).exists(predicate)
 
   def rank(move: Move): Int =
-    buffer.view.take(size).count(m => m < move)
+    buffer.view.take(size).count(_ < move)
 
   def retain(predicate: Move => Boolean): Unit =
     var i = 0
