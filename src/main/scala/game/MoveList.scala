@@ -30,10 +30,14 @@ final class MoveList(capacity: Int = 256):
     buffer(size).set(board, Move.EN_PASSANT, Role.PAWN, capturer, true, to, null)
     size += 1
 
-  // Cast is needed because scala arrays are not covariant.
-  def sort(): Unit = java.util.Arrays.sort(buffer.asInstanceOf[Array[Object]], 0, size)
+  def find(predicate: Move => Boolean): Option[Move] =
+    buffer.view.take(size).find(predicate)
 
-  def anyMatch(predicate: Move => Boolean): Boolean = buffer.take(size).exists(predicate)
+  def exists(predicate: Move => Boolean): Boolean =
+    buffer.view.take(size).exists(predicate)
+
+  def rank(move: Move): Int =
+    buffer.view.take(size).count(_ < move)
 
   def retain(predicate: Move => Boolean): Unit =
     var i = 0
