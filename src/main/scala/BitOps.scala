@@ -10,7 +10,7 @@ object BitOps:
     values.foreach(writeSigned(_, writer))
 
   def writeSigned(n: Int, writer: Writer): Unit =
-    // zigzag encode
+    // zigzag encode (small neg/pos numbers become small pos numbers)
     writeUnsigned((n << 1) ^ (n >> 31), writer)
 
   def writeUnsigned(n: Int, writer: Writer): Unit =
@@ -39,18 +39,12 @@ object BitOps:
       n |= curVal << curShift
     n
 
-  def readSigned(reader: Reader): Int =
+  inline def readSigned(reader: Reader): Int =
     val n = readUnsigned(reader)
     (n >>> 1) ^ -(n & 1) // zigzag decode
 
   def readSigned(reader: Reader, numMoves: Int): Array[Int] =
-    val arr = new Array[Int](numMoves)
-    var i   = 0
-    while i < numMoves do
-      val n = readUnsigned(reader)
-      arr(i) = (n >>> 1) ^ -(n & 1) // zigzag decode
-      i += 1
-    arr
+    Array.tabulate(numMoves) { _ => readSigned(reader) }
 
   final class Reader(bytes: Array[Byte]):
     private val bb               = ByteBuffer.wrap(bytes)
@@ -98,11 +92,7 @@ object BitOps:
       val bb              = ByteBuffer.allocate(4 * buffer.size + numPendingBytes)
       buffer.writeTo(bb)
       if numPendingBytes == 4 then bb.putInt(pendingBits)
-      else
-        var i = 0
-        while i < numPendingBytes do
-          bb.put((pendingBits >>> (24 - i * 8)).toByte)
-          i += 1
+      else for i <- 0 until numPendingBytes do bb.put((pendingBits >>> (24 - i * 8)).toByte)
       bb.array
 
   private final class IntArrayList:
@@ -120,7 +110,4 @@ object BitOps:
     def toArray(): Array[Int] = Arrays.copyOf(data, index)
 
     def writeTo(bb: ByteBuffer): Unit =
-      var i = 0
-      while i < index do
-        bb.putInt(data(i))
-        i += 1
+      for i <- 0 until index do bb.putInt(data(i))

@@ -42,11 +42,10 @@ final class MoveList(capacity: Int = 256):
   def retain(predicate: Move => Boolean): Unit =
     var i = 0
     while i < size do
-      if !predicate(buffer(i)) then swapRemove(i)
-      else i += 1
+      if predicate(buffer(i)) then i += 1
+      else swapRemove(i)
 
-  private def swapRemove(i: Int): Unit =
-    require(i < size)
+  private inline def swapRemove(i: Int): Unit =
     size -= 1
     swap(i, size)
 

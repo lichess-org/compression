@@ -11,8 +11,11 @@ import org.lichess.compression.clock.LowBitTruncator
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 class LowBitTruncTest extends EncodingTestData:
+  private val testData: Array[Int] = new Array(centis.length)
 
-  val testData = centis.clone()
+  @Setup(Level.Invocation)
+  def testSetup() =
+    System.arraycopy(centis, 0, testData, 0, centis.length)
 
   @Benchmark
   def testEncode(blackhole: Blackhole) =
