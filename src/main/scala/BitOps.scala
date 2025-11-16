@@ -73,8 +73,9 @@ object BitOps:
         readNext()
         (res << neededBits) | readBits(neededBits)
 
-  final class Writer:
-    private val buffer           = new IntArrayList()
+  final class Writer(initialCapacity: Int = 10):
+    private var buffer           = Array[Int](initialCapacity)
+    private var index: Int       = 0
     private var numRemainingBits = 32
     private var pendingBits      = 0
 
@@ -83,31 +84,16 @@ object BitOps:
       numRemainingBits -= numBits
       if numRemainingBits >= 0 then pendingBits |= maskedData << numRemainingBits
       else
-        buffer.add(pendingBits | (maskedData >>> -numRemainingBits))
+        if index == buffer.length then buffer = Arrays.copyOf(buffer, index + (index >> 1) + 5)
+        buffer(index) = pendingBits | (maskedData >>> -numRemainingBits)
         numRemainingBits += 32
         pendingBits = maskedData << numRemainingBits
+        index += 1
 
     def toArray(): Array[Byte] =
       val numPendingBytes = (39 - numRemainingBits) >> 3
-      val bb              = ByteBuffer.allocate(4 * buffer.size + numPendingBytes)
-      buffer.writeTo(bb)
+      val bb              = ByteBuffer.allocate(4 * index + numPendingBytes)
+      for i <- 0 until index do bb.putInt(buffer(i))
       if numPendingBytes == 4 then bb.putInt(pendingBits)
       else for i <- 0 until numPendingBytes do bb.put((pendingBits >>> (24 - i * 8)).toByte)
       bb.array
-
-  private final class IntArrayList:
-    private var data  = new Array[Int](10)
-    private var index = 0
-
-    def add(elt: Int): Unit =
-      // This is the growth strategy used by OpenJDK ArrayList.
-      if index == data.length then data = Arrays.copyOf(data, index + (index >> 1) + 5)
-      data(index) = elt
-      index += 1
-
-    def size: Int = index
-
-    def toArray(): Array[Int] = Arrays.copyOf(data, index)
-
-    def writeTo(bb: ByteBuffer): Unit =
-      for i <- 0 until index do bb.putInt(data(i))
