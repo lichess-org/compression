@@ -16,7 +16,7 @@ val commonSettings = Seq(
 lazy val root = (project in file("."))
   .settings(
     commonSettings,
-    scalaVersion := "3.8.1",
+    scalaVersion := "3.8.2",
     name         := "compression",
     organization := "org.lichess",
     version      := "3.2.0",
@@ -28,7 +28,7 @@ lazy val benchmarks = (project in file("benchmarks"))
   .settings(
     commonSettings,
     name           := "compression-benchmarks",
-    scalaVersion   := "3.8.1",
+    scalaVersion   := "3.8.2",
     publish / skip := true,
     libraryDependencies ++= Seq(
       "org.openjdk.jmh" % "jmh-core"                 % "1.37" % "compile",
